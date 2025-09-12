@@ -1,0 +1,115 @@
+/* Center the auth page */
+.auth-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+/* Card container */
+.auth-card {
+    width: 350px;
+    background: #fff;
+    padding: 30px 25px;
+    border-radius: 15px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    text-align: center;
+}
+
+/* Card heading */
+.auth-card h2 {
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 24px;
+}
+
+/* Form inside card */
+.auth-card form {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Input fields */
+.auth-card input {
+    margin-bottom: 15px;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border 0.3s;
+}
+
+.auth-card input:focus {
+    border-color: #4f46e5;
+    outline: none;
+}
+
+/* Submit button */
+.auth-card button {
+    background: #4f46e5;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s, transform 0.2s;
+}
+
+.auth-card button:hover {
+    background: #3730a3;
+    transform: translateY(-2px);
+}
+
+/* Password strength meter */
+.strength-meter {
+    display: flex;
+    gap: 5px;
+    margin: -5px 0 10px;
+}
+
+.strength-meter .bar {
+    flex: 1;
+    height: 6px;
+    background: #ddd;
+    border-radius: 3px;
+    transition: background 0.3s;
+}
+
+.strength-meter .bar.active:nth-child(1) {
+    background: red;
+}
+
+.strength-meter .bar.active:nth-child(2) {
+    background: orange;
+}
+
+.strength-meter .bar.active:nth-child(3) {
+    background: yellowgreen;
+}
+
+.strength-meter .bar.active:nth-child(4) {
+    background: green;
+}
+
+/* Strength text */
+.strength-text {
+    font-size: 13px;
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: #555;
+}
+
+/* Optional: links inside card */
+.auth-card a {
+    color: #4f46e5;
+    text-decoration: none;
+    margin-top: 10px;
+    display: inline-block;
+    font-size: 14px;
+}
+
+.auth-card a:hover {
+    text-decoration: underline;
+}
