@@ -11,7 +11,7 @@ const Register: React.FC = () => {
     const [password, setPassword] = useState("");
 
     const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+        e.preventDefault(); 
 
         try {
             const res = await fetch("http://localhost:5000/api/auth/register", {
