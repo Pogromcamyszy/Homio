@@ -1,98 +1,169 @@
-import React, { useState } from "react";
-import "./AddListing.css"; // import the CSS
+import React, { useState, useRef } from "react";
+import "./AddListing.css";
 
 export default function AddListing() {
-    const [title, setTitle] = useState("");
-    const [details, setDetails] = useState("");
-    const [location, setLocation] = useState("");
-    const [type, setType] = useState("room"); // optionally choose type
-    const [price, setPrice] = useState("");   // optionally input price
-    const [loading, setLoading] = useState(false);
+  const [title, setTitle] = useState("");
+  const [details, setDetails] = useState("");
+  const [location, setLocation] = useState("");
+  const [type, setType] = useState("room");
+  const [price, setPrice] = useState("");
+  const [loading, setLoading] = useState(false);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+  const [photos, setPhotos] = useState<(File | null)[]>([
+    null, null, null, null, null,
+  ]);
 
-        const token = localStorage.getItem("token");
-        if (!token) {
-            alert("You must be logged in to add a listing.");
-            return;
+  const [previews, setPreviews] = useState<string[]>([
+    "", "", "", "", "",
+  ]);
+
+  const fileRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const handlePhotoChange = (index: number, file: File | null) => {
+    const newPhotos = [...photos];
+    const newPreviews = [...previews];
+
+    newPhotos[index] = file;
+
+    if (file) {
+      newPreviews[index] = URL.createObjectURL(file);
+    } else {
+      newPreviews[index] = "";
+    }
+
+    setPhotos(newPhotos);
+    setPreviews(newPreviews);
+  };
+
+  const handleDeletePhoto = (index: number) => {
+    const newPhotos = [...photos];
+    const newPreviews = [...previews];
+
+    newPhotos[index] = null;
+    newPreviews[index] = "";
+
+    setPhotos(newPhotos);
+    setPreviews(newPreviews);
+
+    if (fileRefs.current[index]) {
+      fileRefs.current[index]!.value = "";
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("You must be logged in to add a listing.");
+      return;
+    }
+
+    const hasPhoto = photos.some((p) => p !== null);
+    if (!hasPhoto) {
+      alert("You must upload at least 1 photo.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("district", location);
+      formData.append("price", price);
+      formData.append("type", type);
+
+      photos.forEach((photo) => {
+        if (photo) {
+          formData.append("photos", photo);
         }
+      });
 
-        setLoading(true);
+      const response = await fetch("http://localhost:5000/listings", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
 
-        try {
-            const response = await fetch("http://localhost:5000/listings", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    title,
-                    district: location,
-                    price: Number(price),
-                    type,
-                }),
-            });
+      if (!response.ok) {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.message}`);
+        setLoading(false);
+        return;
+      }
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                alert(`Error: ${errorData.message}`);
-                setLoading(false);
-                return;
-            }
+      const data = await response.json();
+      alert(`Listing added: ${data.title} in ${data.district}`);
 
-            const data = await response.json();
-            alert(`Listing added: ${data.title} in ${data.district}`);
-            setTitle("");
-            setDetails("");
-            setLocation("");
-            setType("room");
-            setPrice("");
-        } catch (err) {
-            console.error(err);
-            alert("An error occurred while adding the listing.");
-        } finally {
-            setLoading(false);
-        }
-    };
+      // reset
+      setTitle("");
+      setDetails("");
+      setLocation("");
+      setType("room");
+      setPrice("");
+      setPhotos([null, null, null, null, null]);
+      setPreviews(["", "", "", "", ""]);
 
-    return (
-        <div className="container">
-            <h2>Add New Listing</h2>
-            <form onSubmit={handleSubmit}>
+      fileRefs.current.forEach((ref) => {
+        if (ref) ref.value = "";
+      });
+
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred while adding the listing.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="container">
+      <h2>Add New Listing</h2>
+      <form onSubmit={handleSubmit}>
+        <input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+        <input placeholder="Details" value={details} onChange={(e) => setDetails(e.target.value)} />
+        <input placeholder="Location" value={location} onChange={(e) => setLocation(e.target.value)} required />
+        <input placeholder="Price" type="number" value={price} onChange={(e) => setPrice(e.target.value)} required />
+
+        <select value={type} onChange={(e) => setType(e.target.value)}>
+          <option value="room">Room</option>
+          <option value="apartment">Apartment</option>
+        </select>
+
+        <div className="photo-upload">
+          <h3>Photos (5 slots)</h3>
+          <div className="photo-grid">
+            {photos.map((_, index) => (
+              <div key={index} className="photo-slot">
                 <input
-                    placeholder="Title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    required
+                  ref={(el) => (fileRefs.current[index] = el)}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) =>
+                    handlePhotoChange(index, e.target.files ? e.target.files[0] : null)
+                  }
                 />
-                <input
-                    placeholder="Details"
-                    value={details}
-                    onChange={(e) => setDetails(e.target.value)}
-                />
-                <input
-                    placeholder="Location"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    required
-                />
-                <input
-                    placeholder="Price"
-                    type="number"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    required
-                />
-                <select value={type} onChange={(e) => setType(e.target.value)}>
-                    <option value="room">Room</option>
-                    <option value="apartment">Apartment</option>
-                </select>
-                <button type="submit" disabled={loading}>
-                    {loading ? "Adding..." : "Add Listing"}
-                </button>
-            </form>
+
+                {previews[index] && (
+                  <div className="preview-box">
+                    <img src={previews[index]} alt={`photo-${index}`} />
+                    <button type="button" onClick={() => handleDeletePhoto(index)}>
+                      Delete
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
-    );
+
+        <button type="submit" disabled={loading}>
+          {loading ? "Adding..." : "Add Listing"}
+        </button>
+      </form>
+    </div>
+  );
 }
