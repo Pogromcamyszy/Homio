@@ -16,48 +16,52 @@ function AppContent() {
     <>
       <header>
         <h1>Homio</h1>
+
         <nav>
           <Link to="/">Home</Link>
+
+          {token && <Link to="/dashboard">Dashboard</Link>}
+
           <Link to="/listings">Listings</Link>
 
           {!token && (
             <>
-              <Link to="/login">Login</Link>
               <Link to="/register">Register</Link>
+              <Link to="/login">Login</Link>
             </>
           )}
 
           {token && (
             <>
-              <Link to="" onClick={logout}>Logout</Link>
               <Link to="/add-listing">Add Listing</Link>
+              <Link to="/login" onClick={logout}>
+                Logout
+              </Link>
             </>
           )}
-
-          <Link to="/dashboard">Dashboard</Link>
         </nav>
       </header>
 
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/listings" element={<Listings />} />
-        <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-
-        <Route
-          path="/add-listing"
-          element={
-            <ProtectedRoute>
-              <AddListing />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/login" element={<Login />} />
 
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/add-listing"
+          element={
+            <ProtectedRoute>
+              <AddListing />
             </ProtectedRoute>
           }
         />
