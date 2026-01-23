@@ -7,12 +7,10 @@ type Listing = {
   district: string;
   price: number;
   type: "room" | "apartment";
-
-  photo_1?: string | null;
-  photo_2?: string | null;
-  photo_3?: string | null;
-  photo_4?: string | null;
-  photo_5?: string | null;
+  owner_id: number;
+  lat: number;
+  lng: number;
+  main_photo?: string | null;
 };
 
 const districts = ["All", "Stare Miasto", "Kazimierz", "Nowa Huta", "Podgórze"];
@@ -46,18 +44,6 @@ const Listings: React.FC = () => {
       (type === "" || listing.type === type)
     );
   });
-
-  // Choose first available photo
-  const getMainPhoto = (listing: Listing) => {
-    return (
-      listing.photo_1 ||
-      listing.photo_2 ||
-      listing.photo_3 ||
-      listing.photo_4 ||
-      listing.photo_5 ||
-      null
-    );
-  };
 
   return (
     <div className="listings-page">
@@ -94,35 +80,24 @@ const Listings: React.FC = () => {
         {filteredListings.length > 0 ? (
           filteredListings.map((listing) => (
             <div key={listing.id} className="listing-card">
-              {/* MAIN PHOTO */}
-              {getMainPhoto(listing) ? (
+              
+              {/* IMAGE LEFT */}
+              {listing.main_photo ? (
                 <img
-                  src={getMainPhoto(listing)!}
+                  src={`http://localhost:5000${listing.main_photo}`}
                   alt={listing.title}
-                  className="listing-photo"
+                  className="thumb-left"
                 />
-              ) : (
-                <div className="no-photo">No photo</div>
-              )}
+              ) : null}
 
-              <h3>{listing.title}</h3>
-              <p><strong>District:</strong> {listing.district}</p>
-              <p><strong>Price:</strong> {listing.price} PLN</p>
-              <p><strong>Type:</strong> {listing.type}</p>
-
-              {/* THUMBNAILS */}
-              <div className="thumbs">
-                {[listing.photo_1, listing.photo_2, listing.photo_3, listing.photo_4, listing.photo_5].map(
-                  (p, i) =>
-                    p ? (
-                      <img
-                        key={i}
-                        src={p}
-                        alt={`thumb-${i}`}
-                        className="thumb"
-                      />
-                    ) : null
-                )}
+              {/* TEXT RIGHT */}
+              <div className="listing-text">
+                <h3>{listing.title}</h3>
+                <p><strong>District:</strong> {listing.district}</p>
+                <p><strong>Price:</strong> {listing.price} PLN</p>
+                <p><strong>Type:</strong> {listing.type}</p>
+                <p><strong>Lat:</strong> {listing.lat}</p>
+                <p><strong>Lng:</strong> {listing.lng}</p>
               </div>
             </div>
           ))
