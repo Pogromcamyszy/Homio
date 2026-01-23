@@ -1,7 +1,15 @@
 import React, { useState, useRef } from "react";
 import "./AddListing.css";
+import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
+
+const libraries = ["places"];
 
 export default function AddListing() {
+  const { isLoaded } = useLoadScript({
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    libraries: libraries as any,
+  });
+
   const [title, setTitle] = useState("");
   const [details, setDetails] = useState("");
   const [location, setLocation] = useState("");
@@ -18,6 +26,9 @@ export default function AddListing() {
   ]);
 
   const fileRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // OLD TOWN KRAKOW
+  const [coords, setCoords] = useState({ lat: 50.0619, lng: 19.9366 });
 
   const handlePhotoChange = (index: number, file: File | null) => {
     const newPhotos = [...photos];
@@ -65,6 +76,11 @@ export default function AddListing() {
       return;
     }
 
+    if (!title || !location || !price) {
+      alert("Title, Location, and Price are required.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -73,6 +89,10 @@ export default function AddListing() {
       formData.append("district", location);
       formData.append("price", price);
       formData.append("type", type);
+
+      // SAVE LAT + LNG
+      formData.append("lat", String(coords.lat));
+      formData.append("lng", String(coords.lng));
 
       photos.forEach((photo) => {
         if (photo) {
@@ -119,9 +139,23 @@ export default function AddListing() {
     }
   };
 
+  // MAP CLICK => SET PIN
+  const handleMapClick = (e: google.maps.MapMouseEvent) => {
+    if (!e.latLng) return;
+
+    const lat = e.latLng.lat();
+    const lng = e.latLng.lng();
+
+    setCoords({ lat, lng });
+    alert(`Pinned location: ${lat}, ${lng}`);
+  };
+
+  if (!isLoaded) return <div>Loading map...</div>;
+
   return (
     <div className="container">
       <h2>Add New Listing</h2>
+
       <form onSubmit={handleSubmit}>
         <input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
         <input placeholder="Details" value={details} onChange={(e) => setDetails(e.target.value)} />
@@ -163,6 +197,20 @@ export default function AddListing() {
         <button type="submit" disabled={loading}>
           {loading ? "Adding..." : "Add Listing"}
         </button>
+
+        {/* GOOGLE MAP */}
+        <div className="map-container">
+          <GoogleMap
+            zoom={14}
+            center={coords}
+            mapContainerStyle={{ width: "100%", height: "400px" }}
+            onClick={handleMapClick}
+          >
+            <Marker position={coords} />
+          </GoogleMap>
+        </div>
+
+        
       </form>
     </div>
   );

@@ -1,140 +1,81 @@
-import express, { Request } from "express";
-const db = require("../db");
-import { authenticateJWT } from "../middleware/auth";
+import express, { Request, Response } from "express";
+import db from "../db";
 import { upload } from "../middleware/upload";
 
 const router = express.Router();
 
-// Extend Request type for JWT-authenticated user
-interface AuthRequest extends Request {
-  userId?: number;
-}
-
-// Get all listings
-router.get("/", (req: Request, res: express.Response) => {
-  const rows = db.prepare("SELECT * FROM listings").all();
-  res.json(rows);
-});
-
-// Add listing (protected + photos)
 router.post(
   "/",
-  authenticateJWT,
   upload.array("photos", 5),
-  (req: AuthRequest, res: express.Response) => {
-    const { title, district, price, type } = req.body;
-    const files = req.files as Express.Multer.File[];
+  (req: Request, res: Response) => {
+    const { title, district, price, type, lat, lng } = req.body;
 
-    if (!title || !district || !price || !type) {
-      return res.status(400).json({ message: "All fields required" });
-    }
+    const photos = req.files as Express.Multer.File[];
 
-    if (!files || files.length === 0) {
-      return res.status(400).json({ message: "At least one photo is required" });
-    }
+    const photo1 = photos[0]?.filename || null;
+    const photo2 = photos[1]?.filename || null;
+    const photo3 = photos[2]?.filename || null;
+    const photo4 = photos[3]?.filename || null;
+    const photo5 = photos[4]?.filename || null;
 
-    const paths = files.map((f) => `/server_pictures/listings/${f.filename}`);
-    
-    const stmt = db.prepare(
-      `INSERT INTO listings 
-        (title, district, price, type, owner_id, photo_1, photo_2, photo_3, photo_4, photo_5)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    );
+    const owner_id = 1; // TODO: set real user from token
+
+    const stmt = db.prepare(`
+      INSERT INTO listings
+      (title, district, price, type, owner_id, photo_1, photo_2, photo_3, photo_4, photo_5, lat, lng)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
 
     const info = stmt.run(
       title,
       district,
       price,
       type,
-      req.userId!,
-      paths[0] || null,
-      paths[1] || null,
-      paths[2] || null,
-      paths[3] || null,
-      paths[4] || null
+      owner_id,
+      photo1,
+      photo2,
+      photo3,
+      photo4,
+      photo5,
+      lat,
+      lng
     );
 
-    const listing = db
-      .prepare("SELECT * FROM listings WHERE id = ?")
-      .get(info.lastInsertRowid);
-
-    res.json(listing);
+    res.json({ id: info.lastInsertRowid, title, district, lat, lng });
   }
 );
 
-// Update listing (protected + photos)
-router.put(
-  "/:id",
-  authenticateJWT,
-  upload.array("photos", 5),
-  (req: AuthRequest, res: express.Response) => {
-    const id = parseInt(req.params.id, 10);
-    const listing = db
-      .prepare("SELECT * FROM listings WHERE id = ? AND owner_id = ?")
-      .get(id, req.userId);
+router.get("/", (req: Request, res: Response) => {
+  try {
+    const rows = db.prepare("SELECT * FROM listings").all();
 
-    if (!listing) return res.status(404).json({ message: "Listing not found" });
+    const listings = rows.map((row: any) => {
+      const main_photo =
+        row.photo_1 ||
+        row.photo_2 ||
+        row.photo_3 ||
+        row.photo_4 ||
+        row.photo_5 ||
+        null;
 
-    const { title, district, price, type } = req.body;
-    const files = req.files as Express.Multer.File[];
+      return {
+        id: row.id,
+        title: row.title,
+        district: row.district,
+        price: row.price,
+        type: row.type,
+        owner_id: row.owner_id,
+        lat: row.lat,
+        lng: row.lng,
+        main_photo: main_photo ? `/server_pictures/listings/${main_photo}` : null
+      };
+    });
 
-    let photoPaths = [
-      listing.photo_1,
-      listing.photo_2,
-      listing.photo_3,
-      listing.photo_4,
-      listing.photo_5,
-    ];
-
-    if (files && files.length > 0) {
-      photoPaths = files.map((f) => `/server_pictures/listings/${f.filename}`);
-      while (photoPaths.length < 5) photoPaths.push(null);
-    }
-
-    if (photoPaths.every((p) => !p)) {
-      return res.status(400).json({ message: "At least one photo is required" });
-    }
-
-    const stmt = db.prepare(
-      `UPDATE listings SET
-        title = ?,
-        district = ?,
-        price = ?,
-        type = ?,
-        photo_1 = ?,
-        photo_2 = ?,
-        photo_3 = ?,
-        photo_4 = ?,
-        photo_5 = ?
-      WHERE id = ?`
-    );
-
-    stmt.run(
-      title ?? listing.title,
-      district ?? listing.district,
-      price ?? listing.price,
-      type ?? listing.type,
-      photoPaths[0],
-      photoPaths[1],
-      photoPaths[2],
-      photoPaths[3],
-      photoPaths[4],
-      id
-    );
-
-    const updated = db.prepare("SELECT * FROM listings WHERE id = ?").get(id);
-    res.json(updated);
+    res.json(listings);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch listings" });
   }
-);
-
-// Delete listing
-router.delete("/:id", authenticateJWT, (req: AuthRequest, res: express.Response) => {
-  const id = parseInt(req.params.id, 10);
-  const stmt = db.prepare("DELETE FROM listings WHERE id = ? AND owner_id = ?");
-  const info = stmt.run(id, req.userId!);
-
-  if (info.changes === 0) return res.status(404).json({ message: "Listing not found" });
-  res.json({ message: "Listing deleted" });
 });
 
 export default router;
