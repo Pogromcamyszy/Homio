@@ -1,9 +1,7 @@
-const Database = require("better-sqlite3");
+import Database from "better-sqlite3";
 
-// SQLite database file
 const db = new Database("homio.db");
 
-// Create tables if not exist
 db.exec(`
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -26,17 +24,8 @@ CREATE TABLE IF NOT EXISTS listings (
   photo_4 TEXT,
   photo_5 TEXT,
 
-  FOREIGN KEY(owner_id) REFERENCES users(id) ON DELETE CASCADE,
-
-  -- at least one photo must be provided
-  CHECK (
-    photo_1 IS NOT NULL OR
-    photo_2 IS NOT NULL OR
-    photo_3 IS NOT NULL OR
-    photo_4 IS NOT NULL OR
-    photo_5 IS NOT NULL
-  )
+  FOREIGN KEY(owner_id) REFERENCES users(id) ON DELETE CASCADE
 );
 `);
 
-module.exports = db;
+export default db;
