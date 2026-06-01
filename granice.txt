@@ -1,0 +1,57 @@
+DZIELNICE KRAKOWA – WARUNKI LOGICZNE (LAT/LNG)
+Format: (lat >= MIN_LAT AND lat <= MAX_LAT AND lng >= MIN_LNG AND lng <= MAX_LNG)
+Każda dzielnica jest w osobnym nawiasie, a dzielnice łączone są OR.
+
+I – Stare Miasto
+(lat >= 50.055 AND lat <= 50.070 AND lng >= 19.930 AND lng <= 19.950)
+
+II – Grzegórzki
+(lat >= 50.045 AND lat <= 50.065 AND lng >= 19.950 AND lng <= 19.980)
+
+III – Prądnik Czerwony
+(lat >= 50.070 AND lat <= 50.100 AND lng >= 19.960 AND lng <= 20.020)
+
+IV – Prądnik Biały
+(lat >= 50.080 AND lat <= 50.120 AND lng >= 19.900 AND lng <= 19.960)
+
+V – Krowodrza
+(lat >= 50.060 AND lat <= 50.090 AND lng >= 19.900 AND lng <= 19.940)
+
+VI – Bronowice
+(lat >= 50.070 AND lat <= 50.100 AND lng >= 19.860 AND lng <= 19.920)
+
+VII – Zwierzyniec
+(lat >= 50.040 AND lat <= 50.090 AND lng >= 19.860 AND lng <= 19.920)
+
+VIII – Dębniki
+(lat >= 50.010 AND lat <= 50.050 AND lng >= 19.880 AND lng <= 19.940)
+
+IX – Łagiewniki–Borek Fałęcki
+(lat >= 49.980 AND lat <= 50.020 AND lng >= 19.900 AND lng <= 19.960)
+
+X – Swoszowice
+(lat >= 49.950 AND lat <= 50.000 AND lng >= 19.880 AND lng <= 19.980)
+
+XI – Podgórze Duchackie
+(lat >= 49.980 AND lat <= 50.030 AND lng >= 19.960 AND lng <= 20.030)
+
+XII – Bieżanów–Prokocim
+(lat >= 49.970 AND lat <= 50.020 AND lng >= 20.000 AND lng <= 20.080)
+
+XIII – Podgórze
+(lat >= 50.020 AND lat <= 50.060 AND lng >= 19.950 AND lng <= 20.020)
+
+XIV – Czyżyny
+(lat >= 50.060 AND lat <= 50.090 AND lng >= 20.020 AND lng <= 20.080)
+
+XV – Mistrzejowice
+(lat >= 50.090 AND lat <= 50.120 AND lng >= 20.020 AND lng <= 20.080)
+
+XVI – Bieńczyce
+(lat >= 50.070 AND lat <= 50.100 AND lng >= 20.060 AND lng <= 20.120)
+
+XVII – Wzgórza Krzesławickie
+(lat >= 50.090 AND lat <= 50.130 AND lng >= 20.080 AND lng <= 20.150)
+
+XVIII – Nowa Huta
+(lat >= 50.060 AND lat <= 50.130 AND lng >= 20.080 AND lng <= 20.200)
