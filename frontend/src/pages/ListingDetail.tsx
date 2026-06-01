@@ -19,7 +19,6 @@ type Listing = {
   photo_3?: string | null;
   photo_4?: string | null;
   photo_5?: string | null;
-  main_photo?: string | null;
 };
 
 export default function ListingDetail() {
@@ -27,7 +26,7 @@ export default function ListingDetail() {
   const navigate = useNavigate();
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activePhoto, setActivePhoto] = useState<string | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
@@ -40,10 +39,7 @@ export default function ListingDetail() {
         const res = await fetch(`http://localhost:5000/listings/${id}`);
         const data: Listing = await res.json();
         setListing(data);
-        const first =
-          data.photo_1 || data.photo_2 || data.photo_3 ||
-          data.photo_4 || data.photo_5 || null;
-        setActivePhoto(first);
+        setActiveIndex(0);
       } catch (err) {
         console.error("Error fetching listing:", err);
       } finally {
@@ -64,6 +60,14 @@ export default function ListingDetail() {
     listing.photo_5,
   ].filter(Boolean) as string[];
 
+  const hasMultiple = photos.length > 1;
+
+  const prevPhoto = () =>
+    setActiveIndex((prev) => (prev === 0 ? photos.length - 1 : prev - 1));
+
+  const nextPhoto = () =>
+    setActiveIndex((prev) => (prev === photos.length - 1 ? 0 : prev + 1));
+
   return (
     <div className="detail-page">
 
@@ -75,25 +79,50 @@ export default function ListingDetail() {
 
         {/* LEWA KOLUMNA — zdjęcia */}
         <div className="detail-photos">
-          {activePhoto ? (
-            <img
-              className="detail-main-photo"
-              src={`http://localhost:5000/server_pictures/listings/${activePhoto}`}
-              alt={listing.title}
-            />
-          ) : (
-            <div className="detail-no-photo">Brak zdjęcia</div>
-          )}
 
-          {photos.length > 1 && (
+          {/* GŁÓWNE ZDJĘCIE ZE STRZAŁKAMI */}
+          <div className="detail-slider">
+            {photos.length > 0 ? (
+              <img
+                className="detail-main-photo"
+                src={`http://localhost:5000/server_pictures/listings/${photos[activeIndex]}`}
+                alt={listing.title}
+              />
+            ) : (
+              <div className="detail-no-photo">Brak zdjęcia</div>
+            )}
+
+            {hasMultiple && (
+              <>
+                <button className="slider-btn slider-btn-left" onClick={prevPhoto}>
+                  &#8249;
+                </button>
+                <button className="slider-btn slider-btn-right" onClick={nextPhoto}>
+                  &#8250;
+                </button>
+                <div className="slider-dots">
+                  {photos.map((_, i) => (
+                    <span
+                      key={i}
+                      className={`slider-dot ${i === activeIndex ? "active" : ""}`}
+                      onClick={() => setActiveIndex(i)}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* MINIATURKI — tylko jeśli więcej niż 1 zdjęcie */}
+          {hasMultiple && (
             <div className="detail-thumbs">
               {photos.map((photo, i) => (
                 <img
                   key={i}
-                  className={`detail-thumb ${activePhoto === photo ? "active" : ""}`}
+                  className={`detail-thumb ${i === activeIndex ? "active" : ""}`}
                   src={`http://localhost:5000/server_pictures/listings/${photo}`}
                   alt={`Zdjęcie ${i + 1}`}
-                  onClick={() => setActivePhoto(photo)}
+                  onClick={() => setActiveIndex(i)}
                 />
               ))}
             </div>

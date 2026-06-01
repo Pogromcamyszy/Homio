@@ -1,65 +1,169 @@
-/* AddListing.css */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
 .container {
-    max-width: 500px;
-    margin: 50px auto;
-    padding: 30px;
-    background: #ffffff;
-    border-radius: 15px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  max-width: 500px;
+  margin: 50px auto;
+  padding: 30px;
+  background: #ffffff;
+  border-radius: 15px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .container h2 {
-    text-align: center;
-    margin-bottom: 25px;
-    color: #333;
-    font-weight: 600;
+  text-align: center;
+  margin-bottom: 25px;
+  color: #333;
+  font-weight: 600;
 }
 
 form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
-form input {
-    padding: 12px 15px;
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    font-size: 14px;
-    transition: all 0.3s ease;
+form input,
+form select {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 14px;
+  transition: all 0.3s ease;
 }
 
-form input:focus {
-    outline: none;
-    border-color: #4f46e5;
-    box-shadow: 0 0 5px rgba(79, 70, 229, 0.3);
+form input:focus,
+form select:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 5px rgba(79, 70, 229, 0.3);
 }
 
-form button {
-    padding: 12px 15px;
-    background-color: #4f46e5;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+form input[readonly] {
+  background-color: #f0f0f0;
+  cursor: not-allowed;
+  color: #555;
 }
 
-form button:hover {
-    background-color: #3730a3;
-    transform: translateY(-2px);
+.photo-upload h3 {
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 10px;
 }
 
-form button:active {
-    transform: translateY(0);
+.photo-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.photo-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.photo-slot input[type="file"] {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13px;
+  border: 1px dashed #ccc;
+  border-radius: 8px;
+  background: #fafafa;
+  cursor: pointer;
+}
+
+.preview-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.preview-box img {
+  width: 100%;
+  max-height: 180px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.preview-box button {
+  width: auto;
+  padding: 6px 14px;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.preview-box button:hover {
+  background-color: #dc2626;
+  transform: none;
+}
+
+form > button[type="submit"] {
+  padding: 12px 15px;
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+form > button[type="submit"]:hover:not(:disabled) {
+  background-color: #3730a3;
+  transform: translateY(-2px);
+}
+
+form > button[type="submit"]:active {
+  transform: translateY(0);
+}
+
+form > button[type="submit"]:disabled {
+  background-color: #a5b4fc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.map-container {
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #ddd;
+}
+
+.district-hint {
+  font-size: 0.85em;
+  color: #999;
+  margin: -8px 0 0;
+}
+
+.district-error {
+  font-size: 0.85em;
+  color: #ef4444;
+  margin: -8px 0 0;
+}
+
+.map-hint {
+  font-size: 0.85em;
+  color: #666;
+  margin: 0;
 }
 
 @media (max-width: 600px) {
-    .container {
-        margin: 30px 15px;
-        padding: 20px;
-    }
+  .container {
+    margin: 30px 15px;
+    padding: 20px;
+  }
 }
