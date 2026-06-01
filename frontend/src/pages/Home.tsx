@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { GoogleMap, Marker, InfoWindow, useLoadScript } from "@react-google-maps/api";
+import { useNavigate } from "react-router-dom";
 import "./Home.css";
 
 const libraries = ["places"];
@@ -40,23 +41,22 @@ const ALL_DISTRICTS = [
 const KRAKOW_CENTER = { lat: 50.0619, lng: 19.9366 };
 
 export default function Home() {
+  const navigate = useNavigate();
+
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
     libraries: libraries as any,
   });
 
-  // Filtry
   const [district, setDistrict] = useState("Wszystkie");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [type, setType] = useState("");
 
-  // Wyniki
   const [listings, setListings] = useState<Listing[]>([]);
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // InfoWindow
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
 
   const handleSearch = async () => {
@@ -162,6 +162,12 @@ export default function Home() {
                 <p><strong>Dzielnica:</strong> {selectedListing.district}</p>
                 <p><strong>Cena:</strong> {selectedListing.price} PLN</p>
                 <p><strong>Typ:</strong> {selectedListing.type === "room" ? "Pokój" : "Mieszkanie"}</p>
+                <button
+                  className="info-window-btn"
+                  onClick={() => navigate(`/listings/${selectedListing.id}`)}
+                >
+                  Przejdź do oferty
+                </button>
               </div>
             </InfoWindow>
           )}

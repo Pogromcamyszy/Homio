@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./Listings.css";
+import { useNavigate } from "react-router-dom";
 
 type Listing = {
   id: number;
@@ -16,6 +17,8 @@ type Listing = {
 const districts = ["All", "Stare Miasto", "Kazimierz", "Nowa Huta", "Podgórze"];
 
 const Listings: React.FC = () => {
+  const navigate = useNavigate(); // ← TUTAJ, wewnątrz komponentu
+
   const [listings, setListings] = useState<Listing[]>([]);
   const [district, setDistrict] = useState("All");
   const [minPrice, setMinPrice] = useState("");
@@ -80,8 +83,7 @@ const Listings: React.FC = () => {
         {filteredListings.length > 0 ? (
           filteredListings.map((listing) => (
             <div key={listing.id} className="listing-card">
-              
-              {/* IMAGE LEFT */}
+
               {listing.main_photo ? (
                 <img
                   src={`http://localhost:5000${listing.main_photo}`}
@@ -90,15 +92,20 @@ const Listings: React.FC = () => {
                 />
               ) : null}
 
-              {/* TEXT RIGHT */}
               <div className="listing-text">
                 <h3>{listing.title}</h3>
                 <p><strong>District:</strong> {listing.district}</p>
                 <p><strong>Price:</strong> {listing.price} PLN</p>
                 <p><strong>Type:</strong> {listing.type}</p>
-                <p><strong>Lat:</strong> {listing.lat}</p>
-                <p><strong>Lng:</strong> {listing.lng}</p>
               </div>
+
+              <button
+                className="listing-detail-btn"
+                onClick={() => navigate(`/listings/${listing.id}`)}
+              >
+                Przejdź do oferty
+              </button>
+
             </div>
           ))
         ) : (

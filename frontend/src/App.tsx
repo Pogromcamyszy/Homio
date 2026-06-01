@@ -8,6 +8,7 @@ import AddListing from "./pages/AddListing";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider, AuthContext } from "./AuthContext";
+import ListingDetail from "./pages/ListingDetail";
 
 function AppContent() {
   const { token, logout } = useContext(AuthContext);
@@ -45,6 +46,7 @@ function AppContent() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/listings" element={<Listings />} />
+        <Route path="/listings/:id" element={<ListingDetail />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
 

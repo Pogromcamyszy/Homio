@@ -121,4 +121,18 @@ router.get("/", (req: Request, res: Response) => {
   }
 });
 
+router.get("/:id", (req: Request, res: Response) => {
+  try {
+    const row = db.prepare("SELECT * FROM listings WHERE id = ?").get(req.params.id) as any;
+    if (!row) {
+      res.status(404).json({ message: "Nie znaleziono ogłoszenia." });
+      return;
+    }
+    res.json(row);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Błąd serwera." });
+  }
+});
+
 export default router;
