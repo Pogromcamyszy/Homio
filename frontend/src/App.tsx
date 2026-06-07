@@ -1,5 +1,7 @@
 import React, { useContext } from "react";
 import { Routes, Route, Link } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import Home from "./pages/Home";
 import Listings from "./pages/Listings";
 import Login from "./pages/Login";
@@ -17,27 +19,20 @@ function AppContent() {
     <>
       <header>
         <h1>Homio</h1>
-
         <nav>
           <Link to="/">Home</Link>
-
           {token && <Link to="/dashboard">Dashboard</Link>}
-
           <Link to="/listings">Listings</Link>
-
           {!token && (
             <>
               <Link to="/register">Register</Link>
               <Link to="/login">Login</Link>
             </>
           )}
-
           {token && (
             <>
               <Link to="/add-listing">Add Listing</Link>
-              <Link to="/login" onClick={logout}>
-                Logout
-              </Link>
+              <Link to="/login" onClick={logout}>Logout</Link>
             </>
           )}
         </nav>
@@ -49,7 +44,6 @@ function AppContent() {
         <Route path="/listings/:id" element={<ListingDetail />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
-
         <Route
           path="/dashboard"
           element={
@@ -58,7 +52,6 @@ function AppContent() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/add-listing"
           element={
@@ -68,6 +61,8 @@ function AppContent() {
           }
         />
       </Routes>
+
+      <ToastContainer position="top-right" autoClose={3000} />
     </>
   );
 }
