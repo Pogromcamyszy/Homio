@@ -14,9 +14,13 @@ CREATE TABLE IF NOT EXISTS listings (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   title TEXT NOT NULL,
   district TEXT NOT NULL,
+  details TEXT NOT NULL DEFAULT '',
   price INTEGER NOT NULL,
   type TEXT NOT NULL,
   owner_id INTEGER NOT NULL,
+  phone TEXT NOT NULL DEFAULT '',
+  lat REAL NOT NULL,
+  lng REAL NOT NULL,
 
   photo_1 TEXT,
   photo_2 TEXT,

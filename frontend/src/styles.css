@@ -7,10 +7,14 @@ body {
 }
 
 header {
-    background: #2c3e50;
-    color: white;
-    padding: 15px;
-    text-align: center;
+  background: #2c3e50;
+  color: white;
+  padding: 15px;
+  text-align: center;
+  height: 60px;        /* ← dodaj tę linię */
+  display: flex;       /* ← i tę */
+  align-items: center; /* ← i tę */
+  justify-content: center; /* ← i tę */
 }
 
 nav a {

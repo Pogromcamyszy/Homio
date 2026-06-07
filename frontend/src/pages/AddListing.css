@@ -50,6 +50,15 @@ form input[readonly] {
   color: #555;
 }
 
+.input-phone-error {
+  border-color: #ef4444 !important;
+}
+
+.input-phone-error:focus {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 5px rgba(239, 68, 68, 0.3) !important;
+}
+
 .photo-upload h3 {
   font-size: 14px;
   color: #333;
@@ -141,6 +150,31 @@ form > button[type="submit"]:disabled {
   border-radius: 10px;
   overflow: hidden;
   border: 1px solid #ddd;
+}
+
+.details-textarea {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  resize: vertical;
+  min-height: 100px;
+  transition: all 0.3s ease;
+}
+
+.details-textarea:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 5px rgba(79, 70, 229, 0.3);
+}
+
+.details-counter {
+  font-size: 11px;
+  color: #9ca3af;
+  text-align: right;
+  margin: -10px 0 0;
 }
 
 .district-hint {

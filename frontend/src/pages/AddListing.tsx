@@ -26,6 +26,8 @@ const DISTRICTS: { name: string; min_lat: number; max_lat: number; min_lng: numb
   { name: "Nowa Huta",                min_lat: 50.060, max_lat: 50.130, min_lng: 20.080, max_lng: 20.200 },
 ];
 
+const phoneRegex = /^(\+48\s?)?[0-9]{3}[\s\-]?[0-9]{3}[\s\-]?[0-9]{3}$/;
+
 function getDistrictForCoords(lat: number, lng: number): string {
   const found = DISTRICTS.find(
     (d) =>
@@ -46,6 +48,8 @@ export default function AddListing() {
   const [district, setDistrict] = useState("");
   const [type, setType] = useState("room");
   const [price, setPrice] = useState("");
+  const [phone, setPhone] = useState("");
+  const [phoneError, setPhoneError] = useState("");
   const [loading, setLoading] = useState(false);
   const [pinMoved, setPinMoved] = useState(false);
 
@@ -84,6 +88,18 @@ export default function AddListing() {
     setDistrict(getDistrictForCoords(lat, lng));
   };
 
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPhone(value);
+    if (value.trim() === "") {
+      setPhoneError("");
+    } else if (!phoneRegex.test(value.trim())) {
+      setPhoneError("Podaj poprawny polski numer telefonu (9 cyfr, np. 123 456 789).");
+    } else {
+      setPhoneError("");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -104,6 +120,16 @@ export default function AddListing() {
       return;
     }
 
+    if (!phone.trim()) {
+      toast.error("Numer telefonu jest wymagany.");
+      return;
+    }
+
+    if (!phoneRegex.test(phone.trim())) {
+      toast.error("Podaj poprawny polski numer telefonu (9 cyfr, np. 123 456 789).");
+      return;
+    }
+
     if (!district) {
       toast.error("Kliknij pin na mapie w granicach Krakowa, aby wybrać dzielnicę.");
       return;
@@ -118,6 +144,7 @@ export default function AddListing() {
       formData.append("details", details);
       formData.append("price", price);
       formData.append("type", type);
+      formData.append("phone", phone.trim());
       formData.append("lat", String(coords.lat));
       formData.append("lng", String(coords.lng));
 
@@ -145,6 +172,8 @@ export default function AddListing() {
       setDistrict("");
       setType("room");
       setPrice("");
+      setPhone("");
+      setPhoneError("");
       setPhotos([null, null, null, null, null]);
       setPreviews(["", "", "", "", ""]);
       setCoords({ lat: 50.0619, lng: 19.9366 });
@@ -191,6 +220,16 @@ export default function AddListing() {
           onChange={(e) => setPrice(e.target.value)}
           required
         />
+
+        <input
+          placeholder="Numer telefonu (np. 123 456 789)"
+          type="tel"
+          value={phone}
+          onChange={handlePhoneChange}
+          className={phoneError ? "input-phone-error" : ""}
+          required
+        />
+        {phoneError && <p className="district-error">{phoneError}</p>}
 
         <select value={type} onChange={(e) => setType(e.target.value)}>
           <option value="room">Room</option>
@@ -247,7 +286,7 @@ export default function AddListing() {
           </GoogleMap>
         </div>
 
-        <button type="submit" disabled={loading || !district}>
+        <button type="submit" disabled={loading || !district || !!phoneError}>
           {loading ? "Adding..." : "Add Listing"}
         </button>
 

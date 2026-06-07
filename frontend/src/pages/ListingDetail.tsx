@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useEffect, useState, useContext } from "react";
+import { useParams } from "react-router-dom";
 import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
+import { AuthContext } from "../AuthContext";
 import "./ListingDetail.css";
 
 const libraries = ["places"];
@@ -9,11 +10,13 @@ type Listing = {
   id: number;
   title: string;
   district: string;
+  details: string;
   price: number;
   type: "room" | "apartment";
   owner_id: number;
   lat: number;
   lng: number;
+  phone: string | null;
   photo_1?: string | null;
   photo_2?: string | null;
   photo_3?: string | null;
@@ -23,10 +26,11 @@ type Listing = {
 
 export default function ListingDetail() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const { token } = useContext(AuthContext);
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [phoneRevealed, setPhoneRevealed] = useState(false);
 
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
@@ -36,7 +40,10 @@ export default function ListingDetail() {
   useEffect(() => {
     const fetchListing = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/listings/${id}`);
+        const headers: Record<string, string> = {};
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        const res = await fetch(`http://localhost:5000/listings/${id}`, { headers });
         const data: Listing = await res.json();
         setListing(data);
         setActiveIndex(0);
@@ -47,7 +54,7 @@ export default function ListingDetail() {
       }
     };
     fetchListing();
-  }, [id]);
+  }, [id, token]);
 
   if (loading) return <div className="detail-loading">Ładowanie...</div>;
   if (!listing) return <div className="detail-loading">Nie znaleziono ogłoszenia.</div>;
@@ -70,17 +77,9 @@ export default function ListingDetail() {
 
   return (
     <div className="detail-page">
-
-      <button className="detail-back" onClick={() => navigate(-1)}>
-        ← Powrót
-      </button>
-
       <div className="detail-container">
 
-        {/* LEWA KOLUMNA — zdjęcia */}
         <div className="detail-photos">
-
-          {/* GŁÓWNE ZDJĘCIE ZE STRZAŁKAMI */}
           <div className="detail-slider">
             {photos.length > 0 ? (
               <img
@@ -113,7 +112,6 @@ export default function ListingDetail() {
             )}
           </div>
 
-          {/* MINIATURKI — tylko jeśli więcej niż 1 zdjęcie */}
           {hasMultiple && (
             <div className="detail-thumbs">
               {photos.map((photo, i) => (
@@ -129,7 +127,6 @@ export default function ListingDetail() {
           )}
         </div>
 
-        {/* PRAWA KOLUMNA — szczegóły */}
         <div className="detail-info">
           <h1 className="detail-title">{listing.title}</h1>
 
@@ -159,11 +156,34 @@ export default function ListingDetail() {
               <span className="detail-label">Cena</span>
               <span className="detail-value">{listing.price} PLN</span>
             </div>
+            <div className="detail-row">
+              <span className="detail-label">Kontakt</span>
+              {token && listing.phone ? (
+                <span
+                  className={`detail-phone ${phoneRevealed ? "revealed" : ""}`}
+                  onClick={() => setPhoneRevealed(true)}
+                >
+                  {phoneRevealed ? listing.phone : "Kliknij, aby pokazać numer"}
+                </span>
+              ) : (
+                <span className="detail-phone-locked">
+                  Zaloguj się, aby zobaczyć numer
+                </span>
+              )}
+            </div>
           </div>
+
+          {listing.details && listing.details.trim() !== "" && (
+            <>
+              <div className="detail-divider" />
+              <h3 className="detail-section-title">Opis</h3>
+              <p className="detail-description">{listing.details}</p>
+            </>
+          )}
 
           <div className="detail-divider" />
 
-          <h3 className="detail-map-title">Lokalizacja</h3>
+          <h3 className="detail-section-title">Lokalizacja</h3>
           {isLoaded ? (
             <div className="detail-map">
               <GoogleMap
