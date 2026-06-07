@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS listings (
   phone TEXT NOT NULL DEFAULT '',
   lat REAL NOT NULL,
   lng REAL NOT NULL,
+  deleted INTEGER NOT NULL DEFAULT 0,
+  accepted INTEGER NOT NULL DEFAULT 0,
 
   photo_1 TEXT,
   photo_2 TEXT,

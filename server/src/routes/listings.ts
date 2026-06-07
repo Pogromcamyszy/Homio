@@ -89,20 +89,8 @@ router.post(
       (title, district, details, price, type, owner_id, phone, photo_1, photo_2, photo_3, photo_4, photo_5, lat, lng)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
-      title,
-      district,
-      details || "",
-      price,
-      type,
-      req.userId,
-      phone.trim(),
-      photo1,
-      photo2,
-      photo3,
-      photo4,
-      photo5,
-      latNum,
-      lngNum
+      title, district, details || "", price, type, req.userId,
+      phone.trim(), photo1, photo2, photo3, photo4, photo5, latNum, lngNum
     );
 
     res.json({ id: info.lastInsertRowid, title, district, lat: latNum, lng: lngNum });
@@ -111,7 +99,7 @@ router.post(
 
 router.get("/", (req: Request, res: Response) => {
   try {
-    const rows = db.prepare("SELECT * FROM listings").all();
+    const rows = db.prepare("SELECT * FROM listings WHERE deleted = 0").all();
 
     const listings = rows.map((row: any) => {
       const main_photo =
@@ -141,7 +129,7 @@ router.get("/", (req: Request, res: Response) => {
 
 router.get("/:id", (req: AuthRequest, res: Response) => {
   try {
-    const row = db.prepare("SELECT * FROM listings WHERE id = ?").get(req.params.id) as any;
+    const row = db.prepare("SELECT * FROM listings WHERE id = ? AND deleted = 0").get(req.params.id) as any;
     if (!row) {
       res.status(404).json({ message: "Nie znaleziono ogłoszenia." });
       return;
@@ -189,7 +177,7 @@ router.put("/:id", authenticateJWT, (req: AuthRequest, res: Response) => {
   try {
     const { title, district, details, price, type, phone, lat, lng } = req.body;
 
-    const row = db.prepare("SELECT * FROM listings WHERE id = ?").get(req.params.id) as any;
+    const row = db.prepare("SELECT * FROM listings WHERE id = ? AND deleted = 0").get(req.params.id) as any;
     if (!row) {
       res.status(404).json({ message: "Nie znaleziono ogłoszenia." });
       return;
@@ -242,19 +230,53 @@ router.put("/:id", authenticateJWT, (req: AuthRequest, res: Response) => {
       UPDATE listings
       SET title = ?, district = ?, details = ?, price = ?, type = ?, phone = ?, lat = ?, lng = ?
       WHERE id = ?
-    `).run(
-      title,
-      district,
-      details || "",
-      price,
-      type,
-      phone.trim(),
-      latNum,
-      lngNum,
-      req.params.id
-    );
+    `).run(title, district, details || "", price, type, phone.trim(), latNum, lngNum, req.params.id);
 
     res.json({ message: "Ogłoszenie zostało zaktualizowane." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Błąd serwera." });
+  }
+});
+
+router.delete("/:id", authenticateJWT, (req: AuthRequest, res: Response) => {
+  try {
+    const row = db.prepare("SELECT * FROM listings WHERE id = ? AND deleted = 0").get(req.params.id) as any;
+    if (!row) {
+      res.status(404).json({ message: "Nie znaleziono ogłoszenia." });
+      return;
+    }
+
+    if (row.owner_id !== req.userId) {
+      res.status(403).json({ message: "Nie masz uprawnień do usunięcia tego ogłoszenia." });
+      return;
+    }
+
+    db.prepare("UPDATE listings SET deleted = 1 WHERE id = ?").run(req.params.id);
+
+    res.json({ message: "Ogłoszenie zostało usunięte." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Błąd serwera." });
+  }
+});
+
+router.patch("/:id/restore", authenticateJWT, (req: AuthRequest, res: Response) => {
+  try {
+    const row = db.prepare("SELECT * FROM listings WHERE id = ? AND deleted = 1").get(req.params.id) as any;
+    if (!row) {
+      res.status(404).json({ message: "Nie znaleziono usuniętego ogłoszenia." });
+      return;
+    }
+
+    if (row.owner_id !== req.userId) {
+      res.status(403).json({ message: "Nie masz uprawnień do przywrócenia tego ogłoszenia." });
+      return;
+    }
+
+    db.prepare("UPDATE listings SET deleted = 0 WHERE id = ?").run(req.params.id);
+
+    res.json({ message: "Ogłoszenie zostało przywrócone." });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Błąd serwera." });

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
+import { toast } from "react-toastify";
 import { AuthContext } from "../AuthContext";
 import "./ListingDetail.css";
 
@@ -33,6 +34,8 @@ export default function ListingDetail() {
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const [phoneRevealed, setPhoneRevealed] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
@@ -57,6 +60,37 @@ export default function ListingDetail() {
     };
     fetchListing();
   }, [id, token]);
+
+  const handleDelete = async () => {
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const response = await fetch(`http://localhost:5000/listings/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.message || "Błąd podczas usuwania ogłoszenia.");
+        return;
+      }
+
+      toast.success("Ogłoszenie zostało usunięte.");
+      navigate("/listings");
+    } catch (err) {
+      console.error(err);
+      toast.error("Błąd połączenia z serwerem.");
+    } finally {
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  };
 
   if (loading) return <div className="detail-loading">Ładowanie...</div>;
   if (!listing) return <div className="detail-loading">Nie znaleziono ogłoszenia.</div>;
@@ -133,12 +167,29 @@ export default function ListingDetail() {
           <div className="detail-title-row">
             <h1 className="detail-title">{listing.title}</h1>
             {listing.is_owner && (
-              <button
-                className="detail-edit-btn"
-                onClick={() => navigate(`/listings/${id}/edit`)}
-              >
-                Edytuj
-              </button>
+              <div className="detail-owner-actions">
+                <button
+                  className="detail-edit-btn"
+                  onClick={() => navigate(`/listings/${id}/edit`)}
+                >
+                  Edytuj
+                </button>
+                <button
+                  className={`detail-delete-btn ${confirmDelete ? "confirm" : ""}`}
+                  onClick={handleDelete}
+                  disabled={deleting}
+                >
+                  {deleting ? "Usuwanie..." : confirmDelete ? "Potwierdź usunięcie" : "Usuń"}
+                </button>
+                {confirmDelete && (
+                  <button
+                    className="detail-cancel-btn"
+                    onClick={() => setConfirmDelete(false)}
+                  >
+                    Anuluj
+                  </button>
+                )}
+              </div>
             )}
           </div>
 
