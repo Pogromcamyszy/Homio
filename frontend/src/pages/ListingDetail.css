@@ -272,3 +272,32 @@
   color: #9ca3af;
   font-style: italic;
 }
+
+.detail-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.detail-title-row .detail-title {
+  margin: 0;
+}
+
+.detail-edit-btn {
+  padding: 8px 18px;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.detail-edit-btn:hover {
+  background: #3730a3;
+}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
 import { AuthContext } from "../AuthContext";
 import "./ListingDetail.css";
@@ -14,6 +14,7 @@ type Listing = {
   price: number;
   type: "room" | "apartment";
   owner_id: number;
+  is_owner: boolean;
   lat: number;
   lng: number;
   phone: string | null;
@@ -26,6 +27,7 @@ type Listing = {
 
 export default function ListingDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { token } = useContext(AuthContext);
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
@@ -128,7 +130,17 @@ export default function ListingDetail() {
         </div>
 
         <div className="detail-info">
-          <h1 className="detail-title">{listing.title}</h1>
+          <div className="detail-title-row">
+            <h1 className="detail-title">{listing.title}</h1>
+            {listing.is_owner && (
+              <button
+                className="detail-edit-btn"
+                onClick={() => navigate(`/listings/${id}/edit`)}
+              >
+                Edytuj
+              </button>
+            )}
+          </div>
 
           <div className="detail-badges">
             <span className="badge badge-type">

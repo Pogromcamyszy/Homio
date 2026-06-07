@@ -7,6 +7,7 @@ import Listings from "./pages/Listings";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AddListing from "./pages/AddListing";
+import EditListing from "./pages/EditListing";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider, AuthContext } from "./AuthContext";
@@ -57,6 +58,14 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <AddListing />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/listings/:id/edit"
+          element={
+            <ProtectedRoute>
+              <EditListing />
             </ProtectedRoute>
           }
         />
