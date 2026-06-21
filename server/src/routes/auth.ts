@@ -49,12 +49,20 @@ router.post("/register", async (req, res) => {
     return res.status(400).json({ message: "Hasło musi zawierać co najmniej jedną cyfrę." });
   }
 
-  const existing = db
+  const existingEmail = db
     .prepare("SELECT * FROM users WHERE email = ?")
     .get(email) as User | undefined;
 
-  if (existing) {
+  if (existingEmail) {
     return res.status(400).json({ message: "Ten adres email jest już zajęty." });
+  }
+
+  const existingUsername = db
+    .prepare("SELECT * FROM users WHERE username = ?")
+    .get(username.trim()) as User | undefined;
+
+  if (existingUsername) {
+    return res.status(400).json({ message: "Ta nazwa użytkownika jest już zajęta." });
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
