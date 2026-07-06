@@ -6,36 +6,7 @@ import { AuthContext } from "../AuthContext";
 import "./EditListing.css";
 
 const libraries = ["places"];
-
-const DISTRICTS: { name: string; min_lat: number; max_lat: number; min_lng: number; max_lng: number }[] = [
-  { name: "Stare Miasto",              min_lat: 50.055, max_lat: 50.070, min_lng: 19.930, max_lng: 19.950 },
-  { name: "Grzegórzki",               min_lat: 50.045, max_lat: 50.065, min_lng: 19.950, max_lng: 19.980 },
-  { name: "Prądnik Czerwony",         min_lat: 50.070, max_lat: 50.100, min_lng: 19.960, max_lng: 20.020 },
-  { name: "Prądnik Biały",            min_lat: 50.080, max_lat: 50.120, min_lng: 19.900, max_lng: 19.960 },
-  { name: "Krowodrza",                min_lat: 50.060, max_lat: 50.090, min_lng: 19.900, max_lng: 19.940 },
-  { name: "Bronowice",                min_lat: 50.070, max_lat: 50.100, min_lng: 19.860, max_lng: 19.920 },
-  { name: "Zwierzyniec",              min_lat: 50.040, max_lat: 50.090, min_lng: 19.860, max_lng: 19.920 },
-  { name: "Dębniki",                  min_lat: 50.010, max_lat: 50.050, min_lng: 19.880, max_lng: 19.940 },
-  { name: "Łagiewniki-Borek Fałęcki", min_lat: 49.980, max_lat: 50.020, min_lng: 19.900, max_lng: 19.960 },
-  { name: "Swoszowice",               min_lat: 49.950, max_lat: 50.000, min_lng: 19.880, max_lng: 19.980 },
-  { name: "Podgórze Duchackie",       min_lat: 49.980, max_lat: 50.030, min_lng: 19.960, max_lng: 20.030 },
-  { name: "Bieżanów-Prokocim",        min_lat: 49.970, max_lat: 50.020, min_lng: 20.000, max_lng: 20.080 },
-  { name: "Podgórze",                 min_lat: 50.020, max_lat: 50.060, min_lng: 19.950, max_lng: 20.020 },
-  { name: "Czyżyny",                  min_lat: 50.060, max_lat: 50.090, min_lng: 20.020, max_lng: 20.080 },
-  { name: "Mistrzejowice",            min_lat: 50.090, max_lat: 50.120, min_lng: 20.020, max_lng: 20.080 },
-  { name: "Bieńczyce",                min_lat: 50.070, max_lat: 50.100, min_lng: 20.060, max_lng: 20.120 },
-  { name: "Wzgórza Krzesławickie",    min_lat: 50.090, max_lat: 50.130, min_lng: 20.080, max_lng: 20.150 },
-  { name: "Nowa Huta",                min_lat: 50.060, max_lat: 50.130, min_lng: 20.080, max_lng: 20.200 },
-];
-
 const phoneRegex = /^(\+48\s?)?[0-9]{3}[\s\-]?[0-9]{3}[\s\-]?[0-9]{3}$/;
-
-function getDistrictForCoords(lat: number, lng: number): string {
-  const found = DISTRICTS.find(
-    (d) => lat >= d.min_lat && lat <= d.max_lat && lng >= d.min_lng && lng <= d.max_lng
-  );
-  return found ? found.name : "";
-}
 
 export default function EditListing() {
   const { id } = useParams();
@@ -91,13 +62,20 @@ export default function EditListing() {
     fetchListing();
   }, [id, token]);
 
-  const handleMapClick = (e: google.maps.MapMouseEvent) => {
+  const handleMapClick = async (e: google.maps.MapMouseEvent) => {
     if (!e.latLng) return;
     const lat = e.latLng.lat();
     const lng = e.latLng.lng();
     setCoords({ lat, lng });
     setPinMoved(true);
-    setDistrict(getDistrictForCoords(lat, lng));
+
+    try {
+      const res = await fetch(`http://localhost:5000/listings/detect-district?lat=${lat}&lng=${lng}`);
+      const data = await res.json();
+      setDistrict(data.district || "");
+    } catch {
+      setDistrict("");
+    }
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
