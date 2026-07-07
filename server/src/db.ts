@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT NOT NULL UNIQUE,
   email TEXT NOT NULL UNIQUE,
-  password TEXT NOT NULL
+  password TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'user'
 );
 
 CREATE TABLE IF NOT EXISTS listings (
@@ -23,6 +24,7 @@ CREATE TABLE IF NOT EXISTS listings (
   lng REAL NOT NULL,
   deleted INTEGER NOT NULL DEFAULT 0,
   accepted INTEGER NOT NULL DEFAULT 0,
+  rented INTEGER NOT NULL DEFAULT 0,
   photo_1 TEXT,
   photo_2 TEXT,
   photo_3 TEXT,
@@ -47,6 +49,9 @@ CREATE TABLE IF NOT EXISTS districts (
   FOREIGN KEY(city_id) REFERENCES cities(id) ON DELETE CASCADE
 );
 `);
+
+try { db.exec(`ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'`); } catch {}
+try { db.exec(`ALTER TABLE listings ADD COLUMN rented INTEGER NOT NULL DEFAULT 0`); } catch {}
 
 const cityExists = db.prepare("SELECT id FROM cities WHERE name = ?").get("Kraków");
 

@@ -37,7 +37,7 @@ router.get("/detect-district", (req: Request, res: Response) => {
 
 router.get("/", (req: Request, res: Response) => {
   try {
-    const rows = db.prepare("SELECT * FROM listings WHERE deleted = 0").all();
+    const rows = db.prepare("SELECT * FROM listings WHERE deleted = 0 AND accepted = 1 AND rented = 0").all();
 
     const listings = rows.map((row: any) => {
       const main_photo =
@@ -54,6 +54,8 @@ router.get("/", (req: Request, res: Response) => {
         owner_id: row.owner_id,
         lat: row.lat,
         lng: row.lng,
+        accepted: row.accepted,
+        rented: row.rented,
         main_photo: main_photo ? `/server_pictures/listings/${main_photo}` : null,
       };
     });
@@ -62,6 +64,30 @@ router.get("/", (req: Request, res: Response) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to fetch listings" });
+  }
+});
+
+router.get("/my", authenticateJWT, (req: AuthRequest, res: Response) => {
+  try {
+    const rows = db.prepare("SELECT * FROM listings WHERE owner_id = ?").all(req.userId) as any[];
+    const listings = rows.map((row) => {
+      const main_photo = row.photo_1 || row.photo_2 || row.photo_3 || row.photo_4 || row.photo_5 || null;
+      return {
+        id: row.id,
+        title: row.title,
+        district: row.district,
+        price: row.price,
+        type: row.type,
+        accepted: row.accepted,
+        deleted: row.deleted,
+        rented: row.rented,
+        main_photo: main_photo ? `/server_pictures/listings/${main_photo}` : null,
+      };
+    });
+    res.json(listings);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Błąd serwera." });
   }
 });
 
@@ -99,6 +125,8 @@ router.get("/:id", (req: AuthRequest, res: Response) => {
       lng: row.lng,
       phone: isLoggedIn ? row.phone : null,
       is_owner: isLoggedIn && userId === row.owner_id,
+      accepted: row.accepted,
+      rented: row.rented,
       photo_1: row.photo_1,
       photo_2: row.photo_2,
       photo_3: row.photo_3,
@@ -181,6 +209,11 @@ router.put("/:id", authenticateJWT, (req: AuthRequest, res: Response) => {
       return;
     }
 
+    if (row.rented === 1) {
+      res.status(400).json({ message: "Nie można edytować wynajętego ogłoszenia." });
+      return;
+    }
+
     if (!title || !district || !price || !type) {
       res.status(400).json({ message: "Wszystkie pola są wymagane." });
       return;
@@ -258,6 +291,32 @@ router.patch("/:id/restore", authenticateJWT, (req: AuthRequest, res: Response) 
 
     db.prepare("UPDATE listings SET deleted = 0 WHERE id = ?").run(req.params.id);
     res.json({ message: "Ogłoszenie zostało przywrócone." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Błąd serwera." });
+  }
+});
+
+router.patch("/:id/rent", authenticateJWT, (req: AuthRequest, res: Response) => {
+  try {
+    const row = db.prepare("SELECT * FROM listings WHERE id = ? AND deleted = 0").get(req.params.id) as any;
+    if (!row) { res.status(404).json({ message: "Nie znaleziono ogłoszenia." }); return; }
+    if (row.owner_id !== req.userId) { res.status(403).json({ message: "Brak uprawnień." }); return; }
+    db.prepare("UPDATE listings SET rented = 1 WHERE id = ?").run(req.params.id);
+    res.json({ message: "Ogłoszenie oznaczone jako wynajęte." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Błąd serwera." });
+  }
+});
+
+router.patch("/:id/unrent", authenticateJWT, (req: AuthRequest, res: Response) => {
+  try {
+    const row = db.prepare("SELECT * FROM listings WHERE id = ? AND deleted = 0").get(req.params.id) as any;
+    if (!row) { res.status(404).json({ message: "Nie znaleziono ogłoszenia." }); return; }
+    if (row.owner_id !== req.userId) { res.status(403).json({ message: "Brak uprawnień." }); return; }
+    db.prepare("UPDATE listings SET rented = 0 WHERE id = ?").run(req.params.id);
+    res.json({ message: "Ogłoszenie przywrócone do aktywnych." });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Błąd serwera." });
