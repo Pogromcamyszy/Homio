@@ -208,9 +208,10 @@ export default function AddListing() {
         {phoneError && <p className="district-error">{phoneError}</p>}
 
         <select value={type} onChange={(e) => setType(e.target.value)}>
-          <option value="room">Room</option>
-          <option value="apartment">Apartment</option>
-        </select>
+  <option value="room">Pokój</option>
+  <option value="apartment">Mieszkanie</option>
+  <option value="house">Dom</option>
+</select>
 
         <input
           placeholder="Dzielnica — kliknij pin na mapie"

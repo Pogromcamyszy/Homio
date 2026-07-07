@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { GoogleMap, Marker, InfoWindow, useLoadScript } from "@react-google-maps/api";
 import { useNavigate } from "react-router-dom";
 import "./Home.css";
@@ -10,35 +10,16 @@ type Listing = {
   title: string;
   district: string;
   price: number;
-  type: "room" | "apartment";
+  type: "room" | "apartment" | "house";
   lat: number;
   lng: number;
   main_photo?: string | null;
 };
 
-const ALL_DISTRICTS = [
-  "Wszystkie",
-  "Stare Miasto",
-  "Grzegórzki",
-  "Prądnik Czerwony",
-  "Prądnik Biały",
-  "Krowodrza",
-  "Bronowice",
-  "Zwierzyniec",
-  "Dębniki",
-  "Łagiewniki-Borek Fałęcki",
-  "Swoszowice",
-  "Podgórze Duchackie",
-  "Bieżanów-Prokocim",
-  "Podgórze",
-  "Czyżyny",
-  "Mistrzejowice",
-  "Bieńczyce",
-  "Wzgórza Krzesławickie",
-  "Nowa Huta",
-];
-
 const KRAKOW_CENTER = { lat: 50.0619, lng: 19.9366 };
+
+const typeLabel = (type: string) =>
+  type === "room" ? "Pokój" : type === "house" ? "Dom" : "Mieszkanie";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -52,12 +33,24 @@ export default function Home() {
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [type, setType] = useState("");
-
   const [listings, setListings] = useState<Listing[]>([]);
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [allDistricts, setAllDistricts] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchDistricts = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/listings/districts");
+        const data: string[] = await res.json();
+        setAllDistricts(["Wszystkie", ...data]);
+      } catch (err) {
+        console.error("Error fetching districts:", err);
+      }
+    };
+    fetchDistricts();
+  }, []);
 
   const handleSearch = async () => {
     setLoading(true);
@@ -84,15 +77,13 @@ export default function Home() {
     }
   };
 
-  if (!isLoaded) return <div className="home-loading">Loading map...</div>;
+  if (!isLoaded) return <div className="home-loading">Ładowanie mapy...</div>;
 
   return (
     <div className="home-page">
-
-      {/* FILTRY */}
       <div className="home-filters">
         <select value={district} onChange={(e) => setDistrict(e.target.value)}>
-          {ALL_DISTRICTS.map((d) => (
+          {allDistricts.map((d) => (
             <option key={d} value={d}>{d}</option>
           ))}
         </select>
@@ -115,6 +106,7 @@ export default function Home() {
           <option value="">Wszystkie typy</option>
           <option value="room">Pokój</option>
           <option value="apartment">Mieszkanie</option>
+          <option value="house">Dom</option>
         </select>
 
         <button className="search-btn" onClick={handleSearch} disabled={loading}>
@@ -122,7 +114,6 @@ export default function Home() {
         </button>
       </div>
 
-      {/* WYNIK WYSZUKIWANIA */}
       {searched && (
         <p className="home-results-info">
           {listings.length > 0
@@ -131,7 +122,6 @@ export default function Home() {
         </p>
       )}
 
-      {/* MAPA */}
       <div className="home-map-container">
         <GoogleMap
           zoom={12}
@@ -161,7 +151,7 @@ export default function Home() {
                 <h3>{selectedListing.title}</h3>
                 <p><strong>Dzielnica:</strong> {selectedListing.district}</p>
                 <p><strong>Cena:</strong> {selectedListing.price} PLN</p>
-                <p><strong>Typ:</strong> {selectedListing.type === "room" ? "Pokój" : "Mieszkanie"}</p>
+                <p><strong>Typ:</strong> {typeLabel(selectedListing.type)}</p>
                 <button
                   className="info-window-btn"
                   onClick={() => navigate(`/listings/${selectedListing.id}`)}
@@ -173,7 +163,6 @@ export default function Home() {
           )}
         </GoogleMap>
       </div>
-
     </div>
   );
 }

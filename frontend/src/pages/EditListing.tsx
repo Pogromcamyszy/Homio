@@ -195,9 +195,10 @@ export default function EditListing() {
         {phoneError && <p className="edit-error">{phoneError}</p>}
 
         <select value={type} onChange={(e) => setType(e.target.value)}>
-          <option value="room">Pokój</option>
-          <option value="apartment">Mieszkanie</option>
-        </select>
+  <option value="room">Pokój</option>
+  <option value="apartment">Mieszkanie</option>
+  <option value="house">Dom</option>
+</select>
 
         <input
           placeholder="Dzielnica — kliknij pin na mapie"
