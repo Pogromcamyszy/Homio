@@ -1,0 +1,289 @@
+.admin-panel {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.admin-panel h2 {
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+}
+
+.admin-tabs {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 0.75rem;
+}
+
+.admin-tabs button {
+  padding: 0.5rem 1.25rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #6b7280;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.admin-tabs button:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.admin-tabs button.active {
+  background: #111827;
+  color: #fff;
+  font-weight: 600;
+}
+
+.admin-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-search input {
+  flex: 1;
+  border: none;
+  background: none;
+  font-size: 1rem;
+  outline: none;
+  color: #111827;
+}
+
+.admin-search-icon {
+  font-size: 1rem;
+  color: #9ca3af;
+}
+
+.admin-search-clear {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  font-size: 1rem;
+  padding: 0;
+}
+
+.admin-search-clear:hover {
+  color: #111827;
+}
+
+.admin-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.admin-card {
+  display: flex;
+  gap: 1rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+
+.admin-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.admin-card-thumb {
+  width: 140px;
+  min-width: 140px;
+  height: 100px;
+  cursor: pointer;
+  overflow: hidden;
+  background: #f3f4f6;
+}
+
+.admin-card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.2s;
+}
+
+.admin-card-thumb:hover img {
+  transform: scale(1.05);
+}
+
+.admin-card-no-photo {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  font-size: 0.85rem;
+}
+
+.admin-card-body {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.admin-card-title {
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #111827;
+}
+
+.admin-card-title:hover {
+  color: #4f46e5;
+  text-decoration: underline;
+}
+
+.admin-card-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.admin-card-status {
+  margin-top: 0.25rem;
+}
+
+.admin-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.admin-table th {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  background: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+  font-weight: 600;
+  color: #374151;
+}
+
+.admin-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: middle;
+}
+
+.admin-table tr:hover td {
+  background: #f9fafb;
+}
+
+.badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.badge-pending {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.badge-accepted {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.badge-admin {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.badge-user {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.btn-view {
+  padding: 0.35rem 0.85rem;
+  background: #e0e7ff;
+  color: #4f46e5;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.btn-view:hover {
+  background: #c7d2fe;
+}
+
+.btn-accept {
+  padding: 0.35rem 0.85rem;
+  background: #d1fae5;
+  color: #059669;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.btn-accept:hover {
+  background: #a7f3d0;
+}
+
+.btn-reject {
+  padding: 0.35rem 0.85rem;
+  background: #fee2e2;
+  color: #dc2626;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.btn-reject:hover {
+  background: #fecaca;
+}
+
+.btn-role {
+  padding: 0.35rem 0.85rem;
+  background: #ede9fe;
+  color: #7c3aed;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.btn-role:hover {
+  background: #ddd6fe;
+}
+
+.admin-loading {
+  text-align: center;
+  padding: 3rem;
+  color: #6b7280;
+}
+
+.admin-empty {
+  text-align: center;
+  padding: 3rem;
+  color: #9ca3af;
+}

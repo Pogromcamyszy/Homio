@@ -113,6 +113,8 @@ router.get("/:id", (req: AuthRequest, res: Response) => {
       }
     }
 
+    const owner = db.prepare("SELECT username, avatar FROM users WHERE id = ?").get(row.owner_id) as any;
+
     res.json({
       id: row.id,
       title: row.title,
@@ -121,6 +123,8 @@ router.get("/:id", (req: AuthRequest, res: Response) => {
       price: row.price,
       type: row.type,
       owner_id: row.owner_id,
+      owner_username: owner?.username || null,
+      owner_avatar: owner?.avatar || null,
       lat: row.lat,
       lng: row.lng,
       phone: isLoggedIn ? row.phone : null,

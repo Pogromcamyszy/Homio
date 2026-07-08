@@ -5,17 +5,17 @@ const SECRET_KEY = "supersecretjwtkey";
 
 export interface AuthRequest extends Request {
   userId?: number;
+  userRole?: string;
 }
 
 export const authenticateJWT = (req: AuthRequest, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) return res.status(401).json({ message: "Missing authorization header" });
-
   const token = authHeader.split(" ")[1];
-
   try {
     const decoded = jwt.verify(token, SECRET_KEY) as JwtPayload;
     req.userId = decoded.id as number;
+    req.userRole = decoded.role as string;
     next();
   } catch (err) {
     return res.status(403).json({ message: "Invalid or expired token" });

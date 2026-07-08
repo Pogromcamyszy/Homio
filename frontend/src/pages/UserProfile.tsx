@@ -1,0 +1,160 @@
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import "./Profile.css";
+
+interface Listing {
+  id: number;
+  title: string;
+  district: string;
+  price: number;
+  type: string;
+  main_photo: string | null;
+}
+
+interface UserProfileData {
+  id: number;
+  username: string;
+  avatar: string | null;
+  created_at: string;
+  listings: Listing[];
+}
+
+export default function UserProfile() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [profile, setProfile] = useState<UserProfileData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [filterType, setFilterType] = useState("");
+  const [filterDistrict, setFilterDistrict] = useState("");
+  const [filterPriceMin, setFilterPriceMin] = useState("");
+  const [filterPriceMax, setFilterPriceMax] = useState("");
+  const [activeFilters, setActiveFilters] = useState({ type: "", district: "", priceMin: "", priceMax: "" });
+
+  useEffect(() => {
+    fetch(`http://localhost:5000/api/profile/${id}`)
+      .then((res) => res.json())
+      .then((data) => setProfile(data))
+      .catch(() => toast.error("Błąd połączenia z serwerem."))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  const applyFilters = () => {
+    setActiveFilters({ type: filterType, district: filterDistrict, priceMin: filterPriceMin, priceMax: filterPriceMax });
+  };
+
+  const clearFilters = () => {
+    setFilterType("");
+    setFilterDistrict("");
+    setFilterPriceMin("");
+    setFilterPriceMax("");
+    setActiveFilters({ type: "", district: "", priceMin: "", priceMax: "" });
+  };
+
+  const filteredListings = (profile?.listings || []).filter((l) => {
+    if (activeFilters.type && l.type !== activeFilters.type) return false;
+    if (activeFilters.district && !l.district.toLowerCase().includes(activeFilters.district.toLowerCase())) return false;
+    if (activeFilters.priceMin && l.price < parseInt(activeFilters.priceMin)) return false;
+    if (activeFilters.priceMax && l.price > parseInt(activeFilters.priceMax)) return false;
+    return true;
+  });
+
+  const typeLabel = (type: string) =>
+    type === "room" ? "Pokój" : type === "house" ? "Dom" : "Mieszkanie";
+
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return "Brak danych";
+    return new Date(dateStr).toLocaleString("pl-PL");
+  };
+
+  const districts = [...new Set((profile?.listings || []).map((l) => l.district))].sort();
+
+  if (loading) return <div className="profile-loading">Ładowanie...</div>;
+  if (!profile) return <div className="profile-loading">Nie znaleziono użytkownika.</div>;
+
+  return (
+    <div className="profile-page">
+      <div className="profile-header">
+        <div className="profile-avatar-section">
+          <div className="profile-avatar" style={{ cursor: "default" }}>
+            {profile.avatar ? (
+              <img
+                src={`http://localhost:5000/server_pictures/avatars/${profile.avatar}`}
+                alt="Avatar"
+              />
+            ) : (
+              <div className="profile-avatar-placeholder">
+                {profile.username.charAt(0).toUpperCase()}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="profile-info">
+          <h2>{profile.username}</h2>
+          <div className="profile-dates">
+            <p>Członek od: <strong>{formatDate(profile.created_at)}</strong></p>
+            <p>Aktywnych ogłoszeń: <strong>{profile.listings.length}</strong></p>
+          </div>
+        </div>
+      </div>
+
+      <h3 className="profile-listings-title">Aktywne ogłoszenia</h3>
+
+      <div className="profile-filters">
+        <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+          <option value="">Wszystkie typy</option>
+          <option value="apartment">Mieszkanie</option>
+          <option value="room">Pokój</option>
+          <option value="house">Dom</option>
+        </select>
+        <select value={filterDistrict} onChange={(e) => setFilterDistrict(e.target.value)}>
+          <option value="">Wszystkie dzielnice</option>
+          {districts.map((d) => (
+            <option key={d} value={d}>{d}</option>
+          ))}
+        </select>
+        <input
+          type="number"
+          placeholder="Cena od"
+          value={filterPriceMin}
+          onChange={(e) => setFilterPriceMin(e.target.value)}
+        />
+        <input
+          type="number"
+          placeholder="Cena do"
+          value={filterPriceMax}
+          onChange={(e) => setFilterPriceMax(e.target.value)}
+        />
+        <button className="btn-filter" onClick={applyFilters}>Filtruj</button>
+        <button className="btn-clear" onClick={clearFilters}>Wyczyść</button>
+      </div>
+
+      {filteredListings.length === 0 ? (
+        <p className="profile-empty">Brak aktywnych ogłoszeń.</p>
+      ) : (
+        <div className="profile-listings">
+          {filteredListings.map((l) => (
+            <div key={l.id} className="profile-listing-card" onClick={() => navigate(`/listings/${l.id}`)}>
+              <div className="profile-listing-photo">
+                {l.main_photo ? (
+                  <img src={`http://localhost:5000/server_pictures/listings/${l.main_photo}`} alt={l.title} />
+                ) : (
+                  <div className="profile-listing-no-photo">Brak zdjęcia</div>
+                )}
+              </div>
+              <div className="profile-listing-body">
+                <div className="profile-listing-title">{l.title}</div>
+                <div className="profile-listing-meta">
+                  <span>{l.district}</span>
+                  <span>{l.price} zł</span>
+                  <span>{typeLabel(l.type)}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

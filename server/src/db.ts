@@ -8,7 +8,10 @@ CREATE TABLE IF NOT EXISTS users (
   username TEXT NOT NULL UNIQUE,
   email TEXT NOT NULL UNIQUE,
   password TEXT NOT NULL,
-  role TEXT NOT NULL DEFAULT 'user'
+  role TEXT NOT NULL DEFAULT 'user',
+  avatar TEXT,
+  created_at TEXT DEFAULT (datetime('now')),
+  last_login TEXT
 );
 
 CREATE TABLE IF NOT EXISTS listings (
@@ -98,5 +101,9 @@ if (!cityExists) {
     insertDistrict.run(cityId, d.name, JSON.stringify(d.polygon));
   }
 }
+
+try { db.exec(`ALTER TABLE users ADD COLUMN avatar TEXT`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN created_at TEXT DEFAULT (datetime('now'))`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN last_login TEXT`); } catch {}
 
 export default db;

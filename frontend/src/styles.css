@@ -1,130 +1,186 @@
 body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background: #f4f6f9;
-    color: #333;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #f4f6f9;
+  color: #333;
 }
 
 header {
   background: #2c3e50;
   color: white;
-  padding: 15px;
-  text-align: center;
-  height: 60px;        /* ← dodaj tę linię */
-  display: flex;       /* ← i tę */
-  align-items: center; /* ← i tę */
-  justify-content: center; /* ← i tę */
+  padding: 0 20px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  justify-content: center;
 }
 
 nav a {
-    margin: 0 10px;
-    color: white;
-    text-decoration: none;
+  color: white;
+  text-decoration: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: background 0.2s;
+  white-space: nowrap;
+  font-size: 1rem;
+}
+
+nav a:hover {
+  background: rgba(255,255,255,0.15);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.nav-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid #e5e7eb;
+  transition: border-color 0.2s;
+  flex-shrink: 0;
+}
+
+.nav-avatar:hover {
+  border-color: #4f46e5;
+}
+
+.nav-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.nav-avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  background: #4f46e5;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
 }
 
 .container {
-    padding: 20px;
+  padding: 20px;
 }
 
 .card {
-    background: white;
-    padding: 15px;
-    margin: 15px 0;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  background: white;
+  padding: 15px;
+  margin: 15px 0;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .map-container {
-    width: 100%;
-    height: 300px;
-    margin: 10px 0;
+  width: 100%;
+  height: 300px;
+  margin: 10px 0;
 }
 
 .auth-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 80vh;
-    background: #f3f4f6;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+  background: #f3f4f6;
 }
 
-/* Card styling */
 .auth-card {
-    background: white;
-    padding: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    max-width: 400px;
-    text-align: center;
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
 }
 
-/* Headings */
 .auth-card h2 {
-    margin: 0 0 0.5rem 0;
+  margin: 0 0 0.5rem 0;
 }
 
 .subtitle {
-    color: #6b7280;
-    margin-bottom: 1.5rem;
+  color: #6b7280;
+  margin-bottom: 1.5rem;
 }
 
-/* Form groups */
 .form-group {
-    margin-bottom: 1.2rem;
-    text-align: left;
+  margin-bottom: 1.2rem;
+  text-align: left;
 }
 
 label {
-    display: block;
-    margin-bottom: 0.4rem;
-    font-weight: 600;
+  display: block;
+  margin-bottom: 0.4rem;
+  font-weight: 600;
 }
 
 input {
-    width: 100%;
-    padding: 0.6rem;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    font-size: 1rem;
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1rem;
 }
 
 input:focus {
-    outline: none;
-    border-color: #4f46e5;
-    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
 }
 
-/* Buttons */
 .btn-primary {
-    width: 100%;
-    padding: 0.8rem;
-    background: #4f46e5;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background 0.2s;
+  width: 100%;
+  padding: 0.8rem;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
 }
 
 .btn-primary:hover {
-    background: #4338ca;
+  background: #4338ca;
 }
 
-/* Switch link */
 .switch-auth {
-    margin-top: 1rem;
-    font-size: 0.9rem;
+  margin-top: 1rem;
+  font-size: 0.9rem;
 }
 
 .switch-auth a {
-    color: #4f46e5;
-    font-weight: 600;
-    text-decoration: none;
+  color: #4f46e5;
+  font-weight: 600;
+  text-decoration: none;
 }
 
 .switch-auth a:hover {
-    text-decoration: underline;
+  text-decoration: underline;
 }
