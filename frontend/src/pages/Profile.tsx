@@ -10,6 +10,8 @@ interface Stats {
   pending: number;
   rented: number;
   deleted: number;
+  likes_received: number;
+  likes_given: number;
 }
 
 interface Listing {
@@ -18,6 +20,18 @@ interface Listing {
   district: string;
   price: number;
   type: string;
+  main_photo: string | null;
+}
+
+interface FavoriteListing {
+  id: number;
+  title: string;
+  district: string;
+  price: number;
+  type: string;
+  accepted: number;
+  rented: number;
+  likes_count: number;
   main_photo: string | null;
 }
 
@@ -37,8 +51,11 @@ export default function Profile() {
   const { token } = useContext(AuthContext);
   const navigate = useNavigate();
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [favorites, setFavorites] = useState<FavoriteListing[]>([]);
+  const [allListings, setAllListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [tab, setTab] = useState<"active" | "pending" | "rented" | "deleted" | "favorites">("active");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [filterType, setFilterType] = useState("");
@@ -49,6 +66,8 @@ export default function Profile() {
 
   useEffect(() => {
     fetchProfile();
+    fetchFavorites();
+    fetchAllListings();
   }, []);
 
   const fetchProfile = async () => {
@@ -63,6 +82,28 @@ export default function Profile() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchFavorites = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/favorites", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setFavorites(Array.isArray(data) ? data : []);
+    } catch {
+      toast.error("Błąd pobierania ulubionych.");
+    }
+  };
+
+  const fetchAllListings = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/listings/my", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setAllListings(Array.isArray(data) ? data : []);
+    } catch {}
   };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,7 +144,19 @@ export default function Profile() {
     setActiveFilters({ type: "", district: "", priceMin: "", priceMax: "" });
   };
 
-  const filteredListings = (profile?.listings || []).filter((l) => {
+  const active = allListings.filter((l) => l.deleted === 0 && l.accepted === 1 && l.rented === 0);
+  const pending = allListings.filter((l) => l.deleted === 0 && l.accepted === 0 && l.rented === 0);
+  const rented = allListings.filter((l) => l.rented === 1 && l.deleted === 0);
+  const deleted = allListings.filter((l) => l.deleted === 1);
+
+  const currentRaw =
+    tab === "active" ? active :
+    tab === "pending" ? pending :
+    tab === "rented" ? rented :
+    tab === "deleted" ? deleted :
+    favorites;
+
+  const filteredListings = currentRaw.filter((l) => {
     if (activeFilters.type && l.type !== activeFilters.type) return false;
     if (activeFilters.district && !l.district.toLowerCase().includes(activeFilters.district.toLowerCase())) return false;
     if (activeFilters.priceMin && l.price < parseInt(activeFilters.priceMin)) return false;
@@ -119,7 +172,7 @@ export default function Profile() {
   const typeLabel = (type: string) =>
     type === "room" ? "Pokój" : type === "house" ? "Dom" : "Mieszkanie";
 
-  const districts = [...new Set((profile?.listings || []).map((l) => l.district))].sort();
+  const districts = [...new Set(currentRaw.map((l) => l.district))].sort();
 
   if (loading) return <div className="profile-loading">Ładowanie...</div>;
   if (!profile) return <div className="profile-loading">Błąd ładowania profilu.</div>;
@@ -130,10 +183,7 @@ export default function Profile() {
         <div className="profile-avatar-section">
           <div className="profile-avatar" onClick={() => fileRef.current?.click()}>
             {profile.avatar ? (
-              <img
-                src={`http://localhost:5000/server_pictures/avatars/${profile.avatar}`}
-                alt="Avatar"
-              />
+              <img src={`http://localhost:5000/server_pictures/avatars/${profile.avatar}`} alt="Avatar" />
             ) : (
               <div className="profile-avatar-placeholder">
                 {profile?.username?.charAt(0).toUpperCase()}
@@ -143,13 +193,7 @@ export default function Profile() {
               {uploadingAvatar ? "Uploading..." : "Zmień"}
             </div>
           </div>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            style={{ display: "none" }}
-            onChange={handleAvatarUpload}
-          />
+          <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAvatarUpload} />
         </div>
 
         <div className="profile-info">
@@ -161,18 +205,32 @@ export default function Profile() {
           <div className="profile-dates">
             <p>Konto założone: <strong>{formatDate(profile.created_at)}</strong></p>
             <p>Ostatnie logowanie: <strong>{formatDate(profile.last_login)}</strong></p>
+            <p>Otrzymane polubienia: <strong>❤️ {profile.stats.likes_received}</strong></p>
+            <p>Dane polubienia: <strong>🤍 {profile.stats.likes_given}</strong></p>
           </div>
         </div>
       </div>
 
       <div className="profile-stats">
-        <div className="stat-card">
-          <div className="stat-number">{profile.stats.total}</div>
-          <div className="stat-label">Wszystkie ogłoszenia</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-number">{profile.stats.active}</div>
+        <div className="stat-card" onClick={() => setTab("active")} style={{ cursor: "pointer" }}>
+          <div className="stat-number">{active.length}</div>
           <div className="stat-label">Aktywne</div>
+        </div>
+        <div className="stat-card" onClick={() => setTab("pending")} style={{ cursor: "pointer" }}>
+          <div className="stat-number">{pending.length}</div>
+          <div className="stat-label">Oczekujące</div>
+        </div>
+        <div className="stat-card" onClick={() => setTab("rented")} style={{ cursor: "pointer" }}>
+          <div className="stat-number">{rented.length}</div>
+          <div className="stat-label">Wynajęte</div>
+        </div>
+        <div className="stat-card" onClick={() => setTab("deleted")} style={{ cursor: "pointer" }}>
+          <div className="stat-number">{deleted.length}</div>
+          <div className="stat-label">Usunięte</div>
+        </div>
+        <div className="stat-card" onClick={() => setTab("favorites")} style={{ cursor: "pointer" }}>
+          <div className="stat-number">{favorites.length}</div>
+          <div className="stat-label">Ulubione</div>
         </div>
       </div>
 
@@ -182,7 +240,23 @@ export default function Profile() {
         </button>
       </div>
 
-      <h3 className="profile-listings-title">Aktywne ogłoszenia</h3>
+      <div className="profile-tabs">
+        <button className={tab === "active" ? "active" : ""} onClick={() => { setTab("active"); clearFilters(); }}>
+          Aktywne <span className="tab-count">{active.length}</span>
+        </button>
+        <button className={tab === "pending" ? "active" : ""} onClick={() => { setTab("pending"); clearFilters(); }}>
+          Oczekujące <span className="tab-count">{pending.length}</span>
+        </button>
+        <button className={tab === "rented" ? "active" : ""} onClick={() => { setTab("rented"); clearFilters(); }}>
+          Wynajęte <span className="tab-count">{rented.length}</span>
+        </button>
+        <button className={tab === "deleted" ? "active" : ""} onClick={() => { setTab("deleted"); clearFilters(); }}>
+          Usunięte <span className="tab-count">{deleted.length}</span>
+        </button>
+        <button className={tab === "favorites" ? "active" : ""} onClick={() => { setTab("favorites"); clearFilters(); }}>
+          Ulubione <span className="tab-count">{favorites.length}</span>
+        </button>
+      </div>
 
       <div className="profile-filters">
         <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
@@ -197,31 +271,21 @@ export default function Profile() {
             <option key={d} value={d}>{d}</option>
           ))}
         </select>
-        <input
-          type="number"
-          placeholder="Cena od"
-          value={filterPriceMin}
-          onChange={(e) => setFilterPriceMin(e.target.value)}
-        />
-        <input
-          type="number"
-          placeholder="Cena do"
-          value={filterPriceMax}
-          onChange={(e) => setFilterPriceMax(e.target.value)}
-        />
+        <input type="number" placeholder="Cena od" value={filterPriceMin} onChange={(e) => setFilterPriceMin(e.target.value)} />
+        <input type="number" placeholder="Cena do" value={filterPriceMax} onChange={(e) => setFilterPriceMax(e.target.value)} />
         <button className="btn-filter" onClick={applyFilters}>Filtruj</button>
         <button className="btn-clear" onClick={clearFilters}>Wyczyść</button>
       </div>
 
       {filteredListings.length === 0 ? (
-        <p className="profile-empty">Brak aktywnych ogłoszeń.</p>
+        <p className="profile-empty">Brak ogłoszeń w tej kategorii.</p>
       ) : (
         <div className="profile-listings">
           {filteredListings.map((l) => (
             <div key={l.id} className="profile-listing-card" onClick={() => navigate(`/listings/${l.id}`)}>
               <div className="profile-listing-photo">
                 {l.main_photo ? (
-                  <img src={`http://localhost:5000/server_pictures/listings/${l.main_photo}`} alt={l.title} />
+  <img src={l.main_photo.startsWith("/server_pictures") ? `http://localhost:5000${l.main_photo}` : `http://localhost:5000/server_pictures/listings/${l.main_photo}`} alt={l.title} />
                 ) : (
                   <div className="profile-listing-no-photo">Brak zdjęcia</div>
                 )}
@@ -232,6 +296,7 @@ export default function Profile() {
                   <span>{l.district}</span>
                   <span>{l.price} zł</span>
                   <span>{typeLabel(l.type)}</span>
+                  {"likes_count" in l && <span>❤️ {(l as FavoriteListing).likes_count}</span>}
                 </div>
               </div>
             </div>

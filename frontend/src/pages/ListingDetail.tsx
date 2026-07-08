@@ -23,6 +23,8 @@ type Listing = {
   phone: string | null;
   accepted: number;
   rented: number;
+  likes_count: number;
+  is_liked: boolean;
   photo_1?: string | null;
   photo_2?: string | null;
   photo_3?: string | null;
@@ -140,6 +142,27 @@ export default function ListingDetail() {
     } catch { toast.error("Błąd."); }
   };
 
+  const handleLike = async () => {
+    if (!token) {
+      toast.error("Zaloguj się, aby dodać do ulubionych.");
+      return;
+    }
+    try {
+      const res = await fetch(`http://localhost:5000/api/favorites/${id}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setListing((prev) => prev ? {
+          ...prev,
+          is_liked: data.liked,
+          likes_count: data.liked ? prev.likes_count + 1 : prev.likes_count - 1,
+        } : prev);
+      }
+    } catch { toast.error("Błąd."); }
+  };
+
   if (loading) return <div className="detail-loading">Ładowanie...</div>;
   if (!listing) return <div className="detail-loading">Nie znaleziono ogłoszenia.</div>;
 
@@ -160,7 +183,6 @@ export default function ListingDetail() {
             ← Wróć do panelu admina
           </button>
         )}
-
         <div className="detail-topbar-right">
           {listing.owner_username && !listing.is_owner && (
             <div className="detail-owner-badge" onClick={() => navigate(`/user/${listing.owner_id}`)}>
@@ -176,7 +198,6 @@ export default function ListingDetail() {
               <span className="detail-owner-name">{listing.owner_username}</span>
             </div>
           )}
-
           {role === "admin" && listing && (
             <div className="detail-admin-bar">
               {listing.accepted ? (
@@ -234,24 +255,29 @@ export default function ListingDetail() {
         <div className="detail-info">
           <div className="detail-title-row">
             <h1 className="detail-title">{listing.title}</h1>
-            {listing.is_owner && (
-              <div className="detail-owner-actions">
-                {!listing.rented && (
-                  <button className="detail-edit-btn" onClick={() => navigate(`/listings/${id}/edit`)}>Edytuj</button>
-                )}
-                {!listing.rented ? (
-                  <button className="detail-rent-btn" onClick={handleRent}>Oznacz jako wynajęte</button>
-                ) : (
-                  <button className="detail-rent-btn" onClick={handleUnrent}>Przywróć do aktywnych</button>
-                )}
-                <button className={`detail-delete-btn ${confirmDelete ? "confirm" : ""}`} onClick={handleDelete} disabled={deleting}>
-                  {deleting ? "Usuwanie..." : confirmDelete ? "Potwierdź usunięcie" : "Usuń"}
-                </button>
-                {confirmDelete && (
-                  <button className="detail-cancel-btn" onClick={() => setConfirmDelete(false)}>Anuluj</button>
-                )}
-              </div>
-            )}
+            <div className="detail-title-actions">
+              <button className={`detail-like-btn ${listing.is_liked ? "liked" : ""}`} onClick={handleLike}>
+                {listing.is_liked ? "❤️" : "🤍"} {listing.likes_count}
+              </button>
+              {listing.is_owner && (
+                <div className="detail-owner-actions">
+                  {!listing.rented && (
+                    <button className="detail-edit-btn" onClick={() => navigate(`/listings/${id}/edit`)}>Edytuj</button>
+                  )}
+                  {!listing.rented ? (
+                    <button className="detail-rent-btn" onClick={handleRent}>Oznacz jako wynajęte</button>
+                  ) : (
+                    <button className="detail-rent-btn" onClick={handleUnrent}>Przywróć do aktywnych</button>
+                  )}
+                  <button className={`detail-delete-btn ${confirmDelete ? "confirm" : ""}`} onClick={handleDelete} disabled={deleting}>
+                    {deleting ? "Usuwanie..." : confirmDelete ? "Potwierdź usunięcie" : "Usuń"}
+                  </button>
+                  {confirmDelete && (
+                    <button className="detail-cancel-btn" onClick={() => setConfirmDelete(false)}>Anuluj</button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="detail-badges">

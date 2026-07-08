@@ -17,6 +17,13 @@ interface UserProfileData {
   username: string;
   avatar: string | null;
   created_at: string;
+  stats: {
+    total: number;
+    active: number;
+    rented: number;
+    likes_received: number;
+    likes_given: number;
+  };
   listings: Listing[];
 }
 
@@ -78,10 +85,7 @@ export default function UserProfile() {
         <div className="profile-avatar-section">
           <div className="profile-avatar" style={{ cursor: "default" }}>
             {profile.avatar ? (
-              <img
-                src={`http://localhost:5000/server_pictures/avatars/${profile.avatar}`}
-                alt="Avatar"
-              />
+              <img src={`http://localhost:5000/server_pictures/avatars/${profile.avatar}`} alt="Avatar" />
             ) : (
               <div className="profile-avatar-placeholder">
                 {profile.username.charAt(0).toUpperCase()}
@@ -94,8 +98,24 @@ export default function UserProfile() {
           <h2>{profile.username}</h2>
           <div className="profile-dates">
             <p>Członek od: <strong>{formatDate(profile.created_at)}</strong></p>
-            <p>Aktywnych ogłoszeń: <strong>{profile.listings.length}</strong></p>
+            <p>Otrzymane polubienia: <strong>❤️ {profile.stats.likes_received}</strong></p>
+            <p>Dane polubienia: <strong>🤍 {profile.stats.likes_given}</strong></p>
           </div>
+        </div>
+      </div>
+
+      <div className="profile-stats">
+        <div className="stat-card">
+          <div className="stat-number">{profile.stats.active}</div>
+          <div className="stat-label">Aktywne ogłoszenia</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-number">{profile.stats.rented}</div>
+          <div className="stat-label">Wynajęte</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-number">{profile.stats.likes_received}</div>
+          <div className="stat-label">Polubienia</div>
         </div>
       </div>
 
@@ -114,18 +134,8 @@ export default function UserProfile() {
             <option key={d} value={d}>{d}</option>
           ))}
         </select>
-        <input
-          type="number"
-          placeholder="Cena od"
-          value={filterPriceMin}
-          onChange={(e) => setFilterPriceMin(e.target.value)}
-        />
-        <input
-          type="number"
-          placeholder="Cena do"
-          value={filterPriceMax}
-          onChange={(e) => setFilterPriceMax(e.target.value)}
-        />
+        <input type="number" placeholder="Cena od" value={filterPriceMin} onChange={(e) => setFilterPriceMin(e.target.value)} />
+        <input type="number" placeholder="Cena do" value={filterPriceMax} onChange={(e) => setFilterPriceMax(e.target.value)} />
         <button className="btn-filter" onClick={applyFilters}>Filtruj</button>
         <button className="btn-clear" onClick={clearFilters}>Wyczyść</button>
       </div>
@@ -138,7 +148,7 @@ export default function UserProfile() {
             <div key={l.id} className="profile-listing-card" onClick={() => navigate(`/listings/${l.id}`)}>
               <div className="profile-listing-photo">
                 {l.main_photo ? (
-                  <img src={`http://localhost:5000/server_pictures/listings/${l.main_photo}`} alt={l.title} />
+                  <img src={l.main_photo.startsWith("/server_pictures") ? `http://localhost:5000${l.main_photo}` : `http://localhost:5000/server_pictures/listings/${l.main_photo}`} alt={l.title} />
                 ) : (
                   <div className="profile-listing-no-photo">Brak zdjęcia</div>
                 )}

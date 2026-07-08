@@ -37,13 +37,14 @@ router.get("/detect-district", (req: Request, res: Response) => {
 
 router.get("/", (req: Request, res: Response) => {
   try {
-    const rows = db.prepare("SELECT * FROM listings WHERE deleted = 0 AND accepted = 1 AND rented = 0").all();
+    const rows = db.prepare(`
+      SELECT l.*, (SELECT COUNT(*) FROM favorites WHERE listing_id = l.id) as likes_count
+      FROM listings l
+      WHERE l.deleted = 0 AND l.accepted = 1 AND l.rented = 0
+    `).all();
 
     const listings = rows.map((row: any) => {
-      const main_photo =
-        row.photo_1 || row.photo_2 || row.photo_3 ||
-        row.photo_4 || row.photo_5 || null;
-
+      const main_photo = row.photo_1 || row.photo_2 || row.photo_3 || row.photo_4 || row.photo_5 || null;
       return {
         id: row.id,
         title: row.title,
@@ -56,6 +57,7 @@ router.get("/", (req: Request, res: Response) => {
         lng: row.lng,
         accepted: row.accepted,
         rented: row.rented,
+        likes_count: row.likes_count,
         main_photo: main_photo ? `/server_pictures/listings/${main_photo}` : null,
       };
     });
@@ -114,6 +116,8 @@ router.get("/:id", (req: AuthRequest, res: Response) => {
     }
 
     const owner = db.prepare("SELECT username, avatar FROM users WHERE id = ?").get(row.owner_id) as any;
+    const likesCount = (db.prepare("SELECT COUNT(*) as cnt FROM favorites WHERE listing_id = ?").get(req.params.id) as any).cnt;
+    const isLiked = isLoggedIn ? !!db.prepare("SELECT id FROM favorites WHERE user_id = ? AND listing_id = ?").get(userId, req.params.id) : false;
 
     res.json({
       id: row.id,
@@ -131,6 +135,8 @@ router.get("/:id", (req: AuthRequest, res: Response) => {
       is_owner: isLoggedIn && userId === row.owner_id,
       accepted: row.accepted,
       rented: row.rented,
+      likes_count: likesCount,
+      is_liked: isLiked,
       photo_1: row.photo_1,
       photo_2: row.photo_2,
       photo_3: row.photo_3,

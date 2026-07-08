@@ -6,6 +6,7 @@ import authRoutes from "./routes/auth";
 import listingsRoutes from "./routes/listings";
 import adminRoutes from "./routes/admin";
 import profileRoutes from "./routes/profile";
+import favoritesRoutes from "./routes/favorites";
 
 const app = express();
 app.use(cors());
@@ -25,6 +26,7 @@ app.use("/api/auth", authRoutes);
 app.use("/listings", listingsRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/favorites", favoritesRoutes);
 
 app.listen(5000, () => {
   console.log("Server running on http://localhost:5000");

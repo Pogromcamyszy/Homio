@@ -51,9 +51,22 @@ CREATE TABLE IF NOT EXISTS districts (
   polygon TEXT NOT NULL,
   FOREIGN KEY(city_id) REFERENCES cities(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS favorites (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  listing_id INTEGER NOT NULL,
+  created_at TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY(listing_id) REFERENCES listings(id) ON DELETE CASCADE,
+  UNIQUE(user_id, listing_id)
+);
 `);
 
 try { db.exec(`ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN avatar TEXT`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN created_at TEXT`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN last_login TEXT`); } catch {}
 try { db.exec(`ALTER TABLE listings ADD COLUMN rented INTEGER NOT NULL DEFAULT 0`); } catch {}
 
 const cityExists = db.prepare("SELECT id FROM cities WHERE name = ?").get("Kraków");
@@ -101,9 +114,5 @@ if (!cityExists) {
     insertDistrict.run(cityId, d.name, JSON.stringify(d.polygon));
   }
 }
-
-try { db.exec(`ALTER TABLE users ADD COLUMN avatar TEXT`); } catch {}
-try { db.exec(`ALTER TABLE users ADD COLUMN created_at TEXT DEFAULT (datetime('now'))`); } catch {}
-try { db.exec(`ALTER TABLE users ADD COLUMN last_login TEXT`); } catch {}
 
 export default db;
