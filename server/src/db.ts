@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS listings (
   deleted INTEGER NOT NULL DEFAULT 0,
   accepted INTEGER NOT NULL DEFAULT 0,
   rented INTEGER NOT NULL DEFAULT 0,
+  views INTEGER NOT NULL DEFAULT 0,
   photo_1 TEXT,
   photo_2 TEXT,
   photo_3 TEXT,
@@ -61,6 +62,15 @@ CREATE TABLE IF NOT EXISTS favorites (
   FOREIGN KEY(listing_id) REFERENCES listings(id) ON DELETE CASCADE,
   UNIQUE(user_id, listing_id)
 );
+
+CREATE TABLE IF NOT EXISTS listing_views (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  listing_id INTEGER NOT NULL,
+  user_id INTEGER,
+  session_id TEXT,
+  created_at TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY(listing_id) REFERENCES listings(id) ON DELETE CASCADE
+);
 `);
 
 try { db.exec(`ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'`); } catch {}
@@ -68,6 +78,24 @@ try { db.exec(`ALTER TABLE users ADD COLUMN avatar TEXT`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN created_at TEXT`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN last_login TEXT`); } catch {}
 try { db.exec(`ALTER TABLE listings ADD COLUMN rented INTEGER NOT NULL DEFAULT 0`); } catch {}
+try { db.exec(`ALTER TABLE listings ADD COLUMN views INTEGER NOT NULL DEFAULT 0`); } catch {}
+try { db.exec(`CREATE TABLE IF NOT EXISTS favorites (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  listing_id INTEGER NOT NULL,
+  created_at TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY(listing_id) REFERENCES listings(id) ON DELETE CASCADE,
+  UNIQUE(user_id, listing_id)
+)`); } catch {}
+try { db.exec(`CREATE TABLE IF NOT EXISTS listing_views (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  listing_id INTEGER NOT NULL,
+  user_id INTEGER,
+  session_id TEXT,
+  created_at TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY(listing_id) REFERENCES listings(id) ON DELETE CASCADE
+)`); } catch {}
 
 const cityExists = db.prepare("SELECT id FROM cities WHERE name = ?").get("Kraków");
 

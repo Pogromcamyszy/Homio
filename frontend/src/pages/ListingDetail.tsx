@@ -25,6 +25,7 @@ type Listing = {
   rented: number;
   likes_count: number;
   is_liked: boolean;
+  views: number;
   photo_1?: string | null;
   photo_2?: string | null;
   photo_3?: string | null;
@@ -51,43 +52,31 @@ export default function ListingDetail() {
     libraries: libraries as any,
   });
 
-  useEffect(() => {
-    const fetchListing = async () => {
-      try {
-        const headers: Record<string, string> = {};
-        if (token) headers["Authorization"] = `Bearer ${token}`;
-        const res = await fetch(`http://localhost:5000/listings/${id}`, { headers });
-        const data: Listing = await res.json();
-        setListing(data);
-        setActiveIndex(0);
-      } catch (err) {
-        console.error("Error fetching listing:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchListing();
-  }, [id, token]);
-
-  const handleDelete = async () => {
-    if (!confirmDelete) { setConfirmDelete(true); return; }
-    setDeleting(true);
+useEffect(() => {
+  const fetchListing = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/listings/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await response.json();
-      if (!response.ok) { toast.error(data.message || "Błąd podczas usuwania."); return; }
-      toast.success("Ogłoszenie zostało usunięte.");
-      navigate("/listings");
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      let sessionId = sessionStorage.getItem("session_id");
+      if (!sessionId) {
+        sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
+        sessionStorage.setItem("session_id", sessionId);
+      }
+      headers["X-Session-ID"] = sessionId;
+
+      const res = await fetch(`http://localhost:5000/listings/${id}`, { headers });
+      const data: Listing = await res.json();
+      setListing(data);
+      setActiveIndex(0);
     } catch (err) {
-      toast.error("Błąd połączenia z serwerem.");
+      console.error("Error fetching listing:", err);
     } finally {
-      setDeleting(false);
-      setConfirmDelete(false);
+      setLoading(false);
     }
   };
+  fetchListing();
+}, [id, token]);
 
   const handleRent = async () => {
     try {
@@ -259,6 +248,9 @@ export default function ListingDetail() {
               <button className={`detail-like-btn ${listing.is_liked ? "liked" : ""}`} onClick={handleLike}>
                 {listing.is_liked ? "❤️" : "🤍"} {listing.likes_count}
               </button>
+              <span className="detail-views-count">
+                👁 {listing.views}
+              </span>
               {listing.is_owner && (
                 <div className="detail-owner-actions">
                   {!listing.rented && (

@@ -905,3 +905,14 @@
   color: #f43f5e;
   background: #fff1f2;
 }
+
+.detail-views-count {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 1rem;
+  color: #6b7280;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}

@@ -58,6 +58,7 @@ router.get("/", (req: Request, res: Response) => {
         accepted: row.accepted,
         rented: row.rented,
         likes_count: row.likes_count,
+        views: row.views,
         main_photo: main_photo ? `/server_pictures/listings/${main_photo}` : null,
       };
     });
@@ -83,6 +84,7 @@ router.get("/my", authenticateJWT, (req: AuthRequest, res: Response) => {
         accepted: row.accepted,
         deleted: row.deleted,
         rented: row.rented,
+        views: row.views,
         main_photo: main_photo ? `/server_pictures/listings/${main_photo}` : null,
       };
     });
@@ -115,6 +117,26 @@ router.get("/:id", (req: AuthRequest, res: Response) => {
       }
     }
 
+    const sessionId = req.headers["x-session-id"] as string | undefined;
+
+    // sprawdź czy już oglądał
+    let alreadyViewed = false;
+    if (userId) {
+      alreadyViewed = !!db.prepare("SELECT id FROM listing_views WHERE listing_id = ? AND user_id = ?").get(req.params.id, userId);
+    } else if (sessionId) {
+      alreadyViewed = !!db.prepare("SELECT id FROM listing_views WHERE listing_id = ? AND session_id = ?").get(req.params.id, sessionId);
+    }
+
+    if (!alreadyViewed) {
+      db.prepare("INSERT INTO listing_views (listing_id, user_id, session_id) VALUES (?, ?, ?)").run(
+        req.params.id,
+        userId || null,
+        userId ? null : (sessionId || null)
+      );
+      db.prepare("UPDATE listings SET views = views + 1 WHERE id = ?").run(req.params.id);
+    }
+
+    const updatedRow = db.prepare("SELECT views FROM listings WHERE id = ?").get(req.params.id) as any;
     const owner = db.prepare("SELECT username, avatar FROM users WHERE id = ?").get(row.owner_id) as any;
     const likesCount = (db.prepare("SELECT COUNT(*) as cnt FROM favorites WHERE listing_id = ?").get(req.params.id) as any).cnt;
     const isLiked = isLoggedIn ? !!db.prepare("SELECT id FROM favorites WHERE user_id = ? AND listing_id = ?").get(userId, req.params.id) : false;
@@ -137,6 +159,7 @@ router.get("/:id", (req: AuthRequest, res: Response) => {
       rented: row.rented,
       likes_count: likesCount,
       is_liked: isLiked,
+      views: updatedRow.views,
       photo_1: row.photo_1,
       photo_2: row.photo_2,
       photo_3: row.photo_3,
