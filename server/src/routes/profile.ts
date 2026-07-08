@@ -2,6 +2,7 @@ import express, { Response } from "express";
 import db from "../db";
 import { authenticateJWT, AuthRequest } from "../middleware/auth";
 import { uploadAvatar } from "../middleware/upload";
+import bcrypt from "bcrypt";
 import path from "path";
 import fs from "fs";
 
@@ -63,6 +64,48 @@ router.post("/avatar", authenticateJWT, uploadAvatar.single("avatar"), (req: Aut
 
     db.prepare("UPDATE users SET avatar = ? WHERE id = ?").run(req.file.filename, req.userId);
     res.json({ avatar: req.file.filename });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Błąd serwera." });
+  }
+});
+
+router.patch("/password", authenticateJWT, async (req: AuthRequest, res: Response) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      res.status(400).json({ message: "Wszystkie pola są wymagane." });
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      res.status(400).json({ message: "Hasło musi mieć co najmniej 8 znaków." });
+      return;
+    }
+
+    if (!/[A-Z]/.test(newPassword)) {
+      res.status(400).json({ message: "Hasło musi zawierać co najmniej jedną wielką literę." });
+      return;
+    }
+
+    if (!/[0-9]/.test(newPassword)) {
+      res.status(400).json({ message: "Hasło musi zawierać co najmniej jedną cyfrę." });
+      return;
+    }
+
+    const user = db.prepare("SELECT * FROM users WHERE id = ?").get(req.userId) as any;
+    if (!user) { res.status(404).json({ message: "Nie znaleziono użytkownika." }); return; }
+
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) {
+      res.status(400).json({ message: "Aktualne hasło jest nieprawidłowe." });
+      return;
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    db.prepare("UPDATE users SET password = ? WHERE id = ?").run(hashedPassword, req.userId);
+    res.json({ message: "Hasło zostało zmienione." });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Błąd serwera." });

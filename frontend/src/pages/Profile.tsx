@@ -47,6 +47,30 @@ interface ProfileData {
   listings: Listing[];
 }
 
+const getPasswordStrength = (password: string) => {
+  let strength = 0;
+  if (password.length >= 8) strength++;
+  if (/[A-Z]/.test(password)) strength++;
+  if (/[0-9]/.test(password)) strength++;
+  if (/[^A-Za-z0-9]/.test(password)) strength++;
+  return strength;
+};
+
+const strengthLabel = (strength: number) => {
+  if (strength === 0) return "";
+  if (strength === 1) return "Słabe";
+  if (strength === 2) return "Średnie";
+  if (strength === 3) return "Dobre";
+  return "Silne";
+};
+
+const strengthColor = (strength: number) => {
+  if (strength === 1) return "#ef4444";
+  if (strength === 2) return "#f59e0b";
+  if (strength === 3) return "#3b82f6";
+  return "#10b981";
+};
+
 export default function Profile() {
   const { token } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -56,6 +80,11 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [tab, setTab] = useState<"active" | "pending" | "rented" | "deleted" | "favorites">("active");
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [filterType, setFilterType] = useState("");
@@ -132,6 +161,51 @@ export default function Profile() {
     }
   };
 
+  const handlePasswordChange = async () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast.error("Wypełnij wszystkie pola.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Nowe hasła nie są identyczne.");
+      return;
+    }
+    if (newPassword.length < 8) {
+      toast.error("Hasło musi mieć co najmniej 8 znaków.");
+      return;
+    }
+    if (!/[A-Z]/.test(newPassword)) {
+      toast.error("Hasło musi zawierać co najmniej jedną wielką literę.");
+      return;
+    }
+    if (!/[0-9]/.test(newPassword)) {
+      toast.error("Hasło musi zawierać co najmniej jedną cyfrę.");
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/profile/password", {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success("Hasło zostało zmienione.");
+        setShowPasswordForm(false);
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+      } else {
+        toast.error(data.message || "Błąd zmiany hasła.");
+      }
+    } catch {
+      toast.error("Błąd połączenia z serwerem.");
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   const applyFilters = () => {
     setActiveFilters({ type: filterType, district: filterDistrict, priceMin: filterPriceMin, priceMax: filterPriceMax });
   };
@@ -177,6 +251,8 @@ export default function Profile() {
   if (loading) return <div className="profile-loading">Ładowanie...</div>;
   if (!profile) return <div className="profile-loading">Błąd ładowania profilu.</div>;
 
+  const passwordStrength = getPasswordStrength(newPassword);
+
   return (
     <div className="profile-page">
       <div className="profile-header">
@@ -197,17 +273,82 @@ export default function Profile() {
         </div>
 
         <div className="profile-info">
-          <h2>{profile.username}</h2>
-          <p className="profile-email">{profile.email}</p>
-          <span className={`badge ${profile.role === "admin" ? "badge-admin" : "badge-user"}`}>
-            {profile.role === "admin" ? "Administrator" : "Użytkownik"}
-          </span>
-          <div className="profile-dates">
-            <p>Konto założone: <strong>{formatDate(profile.created_at)}</strong></p>
-            <p>Ostatnie logowanie: <strong>{formatDate(profile.last_login)}</strong></p>
-            <p>Otrzymane polubienia: <strong>❤️ {profile.stats.likes_received}</strong></p>
-            <p>Dane polubienia: <strong>🤍 {profile.stats.likes_given}</strong></p>
-          </div>
+          {!showPasswordForm ? (
+            <>
+              <div className="profile-info-header">
+                <div>
+                  <h2>{profile.username}</h2>
+                  <p className="profile-email">{profile.email}</p>
+                  <span className={`badge ${profile.role === "admin" ? "badge-admin" : "badge-user"}`}>
+                    {profile.role === "admin" ? "Administrator" : "Użytkownik"}
+                  </span>
+                </div>
+                <button className="btn-change-password" onClick={() => setShowPasswordForm(true)}>
+                  Zmień hasło
+                </button>
+              </div>
+              <div className="profile-dates">
+                <p>Konto założone: <strong>{formatDate(profile.created_at)}</strong></p>
+                <p>Ostatnie logowanie: <strong>{formatDate(profile.last_login)}</strong></p>
+                <p>Otrzymane polubienia: <strong>❤️ {profile.stats.likes_received}</strong></p>
+                <p>Dane polubienia: <strong>🤍 {profile.stats.likes_given}</strong></p>
+              </div>
+            </>
+          ) : (
+            <div className="password-form">
+              <div className="password-form-header">
+                <h3>Zmiana hasła</h3>
+                <button className="btn-cancel-password" onClick={() => {
+                  setShowPasswordForm(false);
+                  setCurrentPassword("");
+                  setNewPassword("");
+                  setConfirmPassword("");
+                }}>
+                  Anuluj
+                </button>
+              </div>
+              <input
+                type="password"
+                placeholder="Aktualne hasło"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+              />
+              <input
+                type="password"
+                placeholder="Nowe hasło (min. 8 znaków, wielka litera, cyfra)"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+              {newPassword && (
+                <div className="password-strength">
+                  <div className="password-strength-bar">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div
+                        key={i}
+                        className="password-strength-segment"
+                        style={{ background: i <= passwordStrength ? strengthColor(passwordStrength) : "#e5e7eb" }}
+                      />
+                    ))}
+                  </div>
+                  <span style={{ color: strengthColor(passwordStrength), fontSize: "0.8rem", fontWeight: 600 }}>
+                    {strengthLabel(passwordStrength)}
+                  </span>
+                </div>
+              )}
+              <input
+                type="password"
+                placeholder="Potwierdź nowe hasło"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+              {confirmPassword && newPassword !== confirmPassword && (
+                <p style={{ color: "#ef4444", fontSize: "0.8rem", margin: 0 }}>Hasła nie są identyczne.</p>
+              )}
+              <button className="btn-save-password" onClick={handlePasswordChange} disabled={changingPassword}>
+                {changingPassword ? "Zapisywanie..." : "Zapisz hasło"}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -285,7 +426,7 @@ export default function Profile() {
             <div key={l.id} className="profile-listing-card" onClick={() => navigate(`/listings/${l.id}`)}>
               <div className="profile-listing-photo">
                 {l.main_photo ? (
-  <img src={l.main_photo.startsWith("/server_pictures") ? `http://localhost:5000${l.main_photo}` : `http://localhost:5000/server_pictures/listings/${l.main_photo}`} alt={l.title} />
+                  <img src={l.main_photo.startsWith("/server_pictures") ? `http://localhost:5000${l.main_photo}` : `http://localhost:5000/server_pictures/listings/${l.main_photo}`} alt={l.title} />
                 ) : (
                   <div className="profile-listing-no-photo">Brak zdjęcia</div>
                 )}

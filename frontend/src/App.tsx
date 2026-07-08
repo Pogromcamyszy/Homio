@@ -79,7 +79,7 @@ function AppContent() {
         <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
         <Route path="/user/:id" element={<UserProfile />} />
       </Routes>
-      <ToastContainer position="top-right" autoClose={3000} />
+      <ToastContainer position="bottom-center" autoClose={3000} />
     </>
   );
 }
