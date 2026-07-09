@@ -16,6 +16,8 @@ import { AuthProvider, AuthContext } from "./AuthContext";
 import ListingDetail from "./pages/ListingDetail";
 import UserProfile from "./pages/UserProfile";
 import { initApiFetch } from "./api/apiFetch";
+import NotFound from "./pages/NotFound";
+
 
 
 function AppContent() {
@@ -145,6 +147,7 @@ function AppContent() {
         <Route path="/listings/:id/edit" element={<ProtectedRoute><EditListing /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
         <Route path="/user/:id" element={<UserProfile />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
       <ToastContainer position="bottom-center" autoClose={3000} />
     </>
