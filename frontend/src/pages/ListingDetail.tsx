@@ -23,6 +23,7 @@ type Listing = {
   phone: string | null;
   accepted: number;
   rented: number;
+  deleted: number;
   likes_count: number;
   is_liked: boolean;
   views: number;
@@ -52,31 +53,51 @@ export default function ListingDetail() {
     libraries: libraries as any,
   });
 
-useEffect(() => {
-  const fetchListing = async () => {
-    try {
-      const headers: Record<string, string> = {};
-      if (token) headers["Authorization"] = `Bearer ${token}`;
+  useEffect(() => {
+    const fetchListing = async () => {
+      try {
+        const headers: Record<string, string> = {};
+        if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      let sessionId = sessionStorage.getItem("session_id");
-      if (!sessionId) {
-        sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
-        sessionStorage.setItem("session_id", sessionId);
+        let sessionId = sessionStorage.getItem("session_id");
+        if (!sessionId) {
+          sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
+          sessionStorage.setItem("session_id", sessionId);
+        }
+        headers["X-Session-ID"] = sessionId;
+
+        const res = await fetch(`http://localhost:5000/listings/${id}`, { headers });
+        const data: Listing = await res.json();
+        setListing(data);
+        setActiveIndex(0);
+      } catch (err) {
+        console.error("Error fetching listing:", err);
+      } finally {
+        setLoading(false);
       }
-      headers["X-Session-ID"] = sessionId;
+    };
+    fetchListing();
+  }, [id, token]);
 
-      const res = await fetch(`http://localhost:5000/listings/${id}`, { headers });
-      const data: Listing = await res.json();
-      setListing(data);
-      setActiveIndex(0);
+  const handleDelete = async () => {
+    if (!confirmDelete) { setConfirmDelete(true); return; }
+    setDeleting(true);
+    try {
+      const response = await fetch(`http://localhost:5000/listings/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      if (!response.ok) { toast.error(data.message || "Błąd podczas usuwania."); return; }
+      toast.success("Ogłoszenie zostało usunięte.");
+      navigate("/listings");
     } catch (err) {
-      console.error("Error fetching listing:", err);
+      toast.error("Błąd połączenia z serwerem.");
     } finally {
-      setLoading(false);
+      setDeleting(false);
+      setConfirmDelete(false);
     }
   };
-  fetchListing();
-}, [id, token]);
 
   const handleRent = async () => {
     try {
@@ -127,6 +148,20 @@ useEffect(() => {
         toast.success("Ogłoszenie odrzucone.");
         if (fromAdmin) navigate("/admin");
         else navigate("/listings");
+      }
+    } catch { toast.error("Błąd."); }
+  };
+
+  const handleAdminRestore = async (accept: boolean) => {
+    const endpoint = accept ? "restore-accept" : "restore";
+    try {
+      const res = await fetch(`http://localhost:5000/api/admin/listings/${id}/${endpoint}`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        toast.success(accept ? "Ogłoszenie przywrócone i zatwierdzone." : "Ogłoszenie przywrócone do oczekujących.");
+        setListing((prev) => prev ? { ...prev, deleted: 0, accepted: accept ? 1 : 0 } : prev);
       }
     } catch { toast.error("Błąd."); }
   };
@@ -187,9 +222,20 @@ useEffect(() => {
               <span className="detail-owner-name">{listing.owner_username}</span>
             </div>
           )}
+
           {role === "admin" && listing && (
             <div className="detail-admin-bar">
-              {listing.accepted ? (
+              {listing.deleted === 1 ? (
+                <>
+                  <span className="badge badge-deleted">Usunięte</span>
+                  <button className="btn-accept" onClick={() => handleAdminRestore(true)}>
+                    Przywróć i zatwierdź
+                  </button>
+                  <button className="btn-role" onClick={() => handleAdminRestore(false)}>
+                    Przywróć do oczekujących
+                  </button>
+                </>
+              ) : listing.accepted ? (
                 <>
                   <span className="badge badge-accepted">Zatwierdzone</span>
                   <button className="btn-reject" onClick={handleAdminReject}>Odrzuć i usuń</button>
@@ -205,6 +251,12 @@ useEffect(() => {
           )}
         </div>
       </div>
+
+      {listing.deleted === 1 && (
+        <div className="detail-archived-banner">
+          To ogłoszenie zostało usunięte i jest widoczne tylko dla administratorów.
+        </div>
+      )}
 
       <div className="detail-container">
         <div className="detail-photos">
@@ -245,13 +297,17 @@ useEffect(() => {
           <div className="detail-title-row">
             <h1 className="detail-title">{listing.title}</h1>
             <div className="detail-title-actions">
-              <button className={`detail-like-btn ${listing.is_liked ? "liked" : ""}`} onClick={handleLike}>
-                {listing.is_liked ? "❤️" : "🤍"} {listing.likes_count}
-              </button>
-              <span className="detail-views-count">
-                👁 {listing.views}
-              </span>
-              {listing.is_owner && (
+              {listing.deleted === 0 && (
+                <>
+                  <button className={`detail-like-btn ${listing.is_liked ? "liked" : ""}`} onClick={handleLike}>
+                    {listing.is_liked ? "❤️" : "🤍"} {listing.likes_count}
+                  </button>
+                  <span className="detail-views-count">
+                    👁 {listing.views}
+                  </span>
+                </>
+              )}
+              {listing.is_owner && listing.deleted === 0 && (
                 <div className="detail-owner-actions">
                   {!listing.rented && (
                     <button className="detail-edit-btn" onClick={() => navigate(`/listings/${id}/edit`)}>Edytuj</button>
@@ -278,6 +334,7 @@ useEffect(() => {
             </span>
             <span className="badge badge-district">{listing.district}</span>
             {listing.rented === 1 && <span className="badge badge-rented">Wynajęte</span>}
+            {listing.deleted === 1 && <span className="badge badge-deleted">Usunięte</span>}
           </div>
 
           <div className="detail-price">{listing.price} PLN / miesiąc</div>

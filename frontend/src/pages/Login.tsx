@@ -36,7 +36,7 @@ const Login: React.FC = () => {
       }
 
       toast.success("Zalogowano pomyślnie!");
-      login(data.token);
+      login(data.token, data.username, data.role);
       navigate("/dashboard");
     } catch (err) {
       console.error(err);

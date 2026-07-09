@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { AuthContext } from "../AuthContext";
 import "./Profile.css";
 
 interface Listing {
@@ -17,6 +18,7 @@ interface UserProfileData {
   username: string;
   avatar: string | null;
   created_at: string;
+  banned: number;
   stats: {
     total: number;
     active: number;
@@ -30,6 +32,7 @@ interface UserProfileData {
 export default function UserProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { token, role } = useContext(AuthContext);
   const [profile, setProfile] = useState<UserProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState("");
@@ -39,12 +42,38 @@ export default function UserProfile() {
   const [activeFilters, setActiveFilters] = useState({ type: "", district: "", priceMin: "", priceMax: "" });
 
   useEffect(() => {
+    fetchProfile();
+  }, [id]);
+
+  const fetchProfile = () => {
     fetch(`http://localhost:5000/api/profile/${id}`)
       .then((res) => res.json())
       .then((data) => setProfile(data))
       .catch(() => toast.error("Błąd połączenia z serwerem."))
       .finally(() => setLoading(false));
-  }, [id]);
+  };
+
+  const handleBan = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/admin/users/${id}/ban`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) { toast.success("Użytkownik zbanowany."); fetchProfile(); }
+      else toast.error(data.message);
+    } catch { toast.error("Błąd."); }
+  };
+
+  const handleUnban = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/admin/users/${id}/unban`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) { toast.success("Użytkownik odbanowany."); fetchProfile(); }
+    } catch { toast.error("Błąd."); }
+  };
 
   const applyFilters = () => {
     setActiveFilters({ type: filterType, district: filterDistrict, priceMin: filterPriceMin, priceMax: filterPriceMax });
@@ -95,11 +124,29 @@ export default function UserProfile() {
         </div>
 
         <div className="profile-info">
-          <h2>{profile.username}</h2>
-          <div className="profile-dates">
-            <p>Członek od: <strong>{formatDate(profile.created_at)}</strong></p>
-            <p>Otrzymane polubienia: <strong>❤️ {profile.stats.likes_received}</strong></p>
-            <p>Dane polubienia: <strong>🤍 {profile.stats.likes_given}</strong></p>
+          <div className="profile-info-header">
+            <div>
+              <h2>
+                {profile.username}
+                {profile.banned === 1 && (
+                  <span className="badge badge-banned" style={{ marginLeft: "0.75rem" }}>Zbanowany</span>
+                )}
+              </h2>
+              <div className="profile-dates">
+                <p>Członek od: <strong>{formatDate(profile.created_at)}</strong></p>
+                <p>Otrzymane polubienia: <strong>❤️ {profile.stats.likes_received}</strong></p>
+                <p>Dane polubienia: <strong>🤍 {profile.stats.likes_given}</strong></p>
+              </div>
+            </div>
+            {role === "admin" && (
+              <div>
+                {profile.banned === 0 ? (
+                  <button className="btn-ban" onClick={handleBan}>Zbanuj</button>
+                ) : (
+                  <button className="btn-unban" onClick={handleUnban}>Odbanuj</button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

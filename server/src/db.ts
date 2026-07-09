@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS users (
   role TEXT NOT NULL DEFAULT 'user',
   avatar TEXT,
   created_at TEXT DEFAULT (datetime('now')),
-  last_login TEXT
+  last_login TEXT,
+  banned INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS listings (
@@ -77,6 +78,7 @@ try { db.exec(`ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'`);
 try { db.exec(`ALTER TABLE users ADD COLUMN avatar TEXT`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN created_at TEXT`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN last_login TEXT`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN banned INTEGER NOT NULL DEFAULT 0`); } catch {}
 try { db.exec(`ALTER TABLE listings ADD COLUMN rented INTEGER NOT NULL DEFAULT 0`); } catch {}
 try { db.exec(`ALTER TABLE listings ADD COLUMN views INTEGER NOT NULL DEFAULT 0`); } catch {}
 try { db.exec(`CREATE TABLE IF NOT EXISTS favorites (

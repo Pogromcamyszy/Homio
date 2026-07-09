@@ -474,3 +474,44 @@
   border-radius: 2px;
   transition: background 0.2s;
 }
+
+.btn-ban {
+  padding: 0.35rem 0.85rem;
+  background: #fee2e2;
+  color: #dc2626;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+}
+
+.btn-ban:hover {
+  background: #fecaca;
+}
+
+.btn-unban {
+  padding: 0.35rem 0.85rem;
+  background: #d1fae5;
+  color: #059669;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+}
+
+.btn-unban:hover {
+  background: #a7f3d0;
+}
+
+.badge-banned {
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}

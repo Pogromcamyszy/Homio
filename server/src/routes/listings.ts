@@ -38,10 +38,11 @@ router.get("/detect-district", (req: Request, res: Response) => {
 router.get("/", (req: Request, res: Response) => {
   try {
     const rows = db.prepare(`
-      SELECT l.*, (SELECT COUNT(*) FROM favorites WHERE listing_id = l.id) as likes_count
-      FROM listings l
-      WHERE l.deleted = 0 AND l.accepted = 1 AND l.rented = 0
-    `).all();
+  SELECT l.*, (SELECT COUNT(*) FROM favorites WHERE listing_id = l.id) as likes_count
+  FROM listings l
+  JOIN users u ON l.owner_id = u.id
+  WHERE l.deleted = 0 AND l.accepted = 1 AND l.rented = 0 AND u.banned = 0
+`).all();
 
     const listings = rows.map((row: any) => {
       const main_photo = row.photo_1 || row.photo_2 || row.photo_3 || row.photo_4 || row.photo_5 || null;
@@ -97,11 +98,25 @@ router.get("/my", authenticateJWT, (req: AuthRequest, res: Response) => {
 
 router.get("/:id", (req: AuthRequest, res: Response) => {
   try {
-    const row = db.prepare("SELECT * FROM listings WHERE id = ? AND deleted = 0").get(req.params.id) as any;
-    if (!row) {
-      res.status(404).json({ message: "Nie znaleziono ogłoszenia." });
-      return;
-    }
+    const row = db.prepare("SELECT * FROM listings WHERE id = ?").get(req.params.id) as any;
+if (!row) {
+  res.status(404).json({ message: "Nie znaleziono ogłoszenia." });
+  return;
+}
+if (row.deleted === 1) {
+  const authHeader2 = req.headers.authorization;
+  let isAdmin = false;
+  if (authHeader2) {
+    try {
+      const decoded2 = jwt.verify(authHeader2.split(" ")[1], SECRET_KEY) as any;
+      isAdmin = decoded2.role === "admin";
+    } catch {}
+  }
+  if (!isAdmin) {
+    res.status(404).json({ message: "Nie znaleziono ogłoszenia." });
+    return;
+  }
+}
 
     const authHeader = req.headers.authorization;
     let isLoggedIn = false;
@@ -156,7 +171,8 @@ router.get("/:id", (req: AuthRequest, res: Response) => {
       phone: isLoggedIn ? row.phone : null,
       is_owner: isLoggedIn && userId === row.owner_id,
       accepted: row.accepted,
-      rented: row.rented,
+rented: row.rented,
+deleted: row.deleted,
       likes_count: likesCount,
       is_liked: isLiked,
       views: updatedRow.views,

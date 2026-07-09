@@ -114,7 +114,7 @@ router.patch("/password", authenticateJWT, async (req: AuthRequest, res: Respons
 
 router.get("/:id", (req: AuthRequest, res: Response) => {
   try {
-    const user = db.prepare("SELECT id, username, avatar, created_at FROM users WHERE id = ?").get(req.params.id) as any;
+    const user = db.prepare("SELECT id, username, avatar, created_at, banned FROM users WHERE id = ?").get(req.params.id) as any;
     if (!user) { res.status(404).json({ message: "Nie znaleziono użytkownika." }); return; }
 
     const stats = db.prepare(`
