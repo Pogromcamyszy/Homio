@@ -38,9 +38,11 @@ router.get("/detect-district", (req: Request, res: Response) => {
 router.get("/", (req: Request, res: Response) => {
   try {
     const { search, type, district, minPrice, maxPrice } = req.query;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const offset = (page - 1) * limit;
 
-    let query = `
-      SELECT l.*, (SELECT COUNT(*) FROM favorites WHERE listing_id = l.id) as likes_count
+    let baseWhere = `
       FROM listings l
       JOIN users u ON l.owner_id = u.id
       WHERE l.deleted = 0 AND l.accepted = 1 AND l.rented = 0 AND u.banned = 0
@@ -48,15 +50,24 @@ router.get("/", (req: Request, res: Response) => {
     const params: any[] = [];
 
     if (search) {
-      query += ` AND (l.title LIKE ? OR l.details LIKE ? OR l.district LIKE ?)`;
+      baseWhere += ` AND (l.title LIKE ? OR l.details LIKE ? OR l.district LIKE ?)`;
       params.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
-    if (type) { query += ` AND l.type = ?`; params.push(type); }
-    if (district && district !== "All") { query += ` AND l.district = ?`; params.push(district); }
-    if (minPrice) { query += ` AND l.price >= ?`; params.push(parseInt(minPrice as string)); }
-    if (maxPrice) { query += ` AND l.price <= ?`; params.push(parseInt(maxPrice as string)); }
+    if (type) { baseWhere += ` AND l.type = ?`; params.push(type); }
+    if (district && district !== "All") { baseWhere += ` AND l.district = ?`; params.push(district); }
+    if (minPrice) { baseWhere += ` AND l.price >= ?`; params.push(parseInt(minPrice as string)); }
+    if (maxPrice) { baseWhere += ` AND l.price <= ?`; params.push(parseInt(maxPrice as string)); }
 
-    const rows = db.prepare(query).all(...params);
+    const countQuery = `SELECT COUNT(*) as cnt ${baseWhere}`;
+    const total = (db.prepare(countQuery).get(...params) as any).cnt;
+
+    const dataQuery = `
+      SELECT l.*, (SELECT COUNT(*) FROM favorites WHERE listing_id = l.id) as likes_count
+      ${baseWhere}
+      ORDER BY l.id DESC
+      LIMIT ? OFFSET ?
+    `;
+    const rows = db.prepare(dataQuery).all(...params, limit, offset);
 
     const listings = rows.map((row: any) => {
       const main_photo = row.photo_1 || row.photo_2 || row.photo_3 || row.photo_4 || row.photo_5 || null;
@@ -78,7 +89,7 @@ router.get("/", (req: Request, res: Response) => {
       };
     });
 
-    res.json(listings);
+    res.json({ listings, total, page, limit, totalPages: Math.ceil(total / limit) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to fetch listings" });

@@ -16,12 +16,17 @@ type Listing = {
   main_photo?: string | null;
 };
 
+const LIMIT = 10;
+
 const Listings: React.FC = () => {
   const navigate = useNavigate();
 
   const [listings, setListings] = useState<Listing[]>([]);
   const [allDistricts, setAllDistricts] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
   const [search, setSearch] = useState("");
   const [district, setDistrict] = useState("All");
@@ -34,10 +39,10 @@ const Listings: React.FC = () => {
       .then((res) => res.json())
       .then((data) => setAllDistricts(data))
       .catch(console.error);
-    fetchListings();
+    fetchListings(1);
   }, []);
 
-  const fetchListings = async (params?: {
+  const fetchListings = async (p: number, params?: {
     search?: string;
     district?: string;
     type?: string;
@@ -47,6 +52,8 @@ const Listings: React.FC = () => {
     setLoading(true);
     try {
       const query = new URLSearchParams();
+      query.append("page", p.toString());
+      query.append("limit", LIMIT.toString());
       if (params?.search) query.append("search", params.search);
       if (params?.district && params.district !== "All") query.append("district", params.district);
       if (params?.type) query.append("type", params.type);
@@ -54,8 +61,11 @@ const Listings: React.FC = () => {
       if (params?.maxPrice) query.append("maxPrice", params.maxPrice);
 
       const res = await fetch(`http://localhost:5000/listings?${query.toString()}`);
-      const data: Listing[] = await res.json();
-      setListings(data);
+      const data = await res.json();
+      setListings(data.listings);
+      setTotalPages(data.totalPages);
+      setTotal(data.total);
+      setPage(p);
     } catch (err) {
       console.error("Error fetching listings:", err);
     } finally {
@@ -64,7 +74,7 @@ const Listings: React.FC = () => {
   };
 
   const handleSearch = () => {
-    fetchListings({ search, district, type, minPrice, maxPrice });
+    fetchListings(1, { search, district, type, minPrice, maxPrice });
   };
 
   const handleClear = () => {
@@ -73,7 +83,12 @@ const Listings: React.FC = () => {
     setType("");
     setMinPrice("");
     setMaxPrice("");
-    fetchListings();
+    fetchListings(1);
+  };
+
+  const handlePage = (p: number) => {
+    fetchListings(p, { search, district, type, minPrice, maxPrice });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const typeLabel = (type: string) =>
@@ -122,6 +137,10 @@ const Listings: React.FC = () => {
         </div>
       </div>
 
+      {total > 0 && (
+        <p className="listings-count">Znaleziono {total} ogłoszenie(ń)</p>
+      )}
+
       {loading && <p style={{ textAlign: "center", color: "#6b7280" }}>Ładowanie...</p>}
 
       <div className="listings-grid">
@@ -154,6 +173,34 @@ const Listings: React.FC = () => {
           !loading && <p>Brak ogłoszeń.</p>
         )}
       </div>
+
+      {totalPages > 1 && (
+        <div className="pagination">
+          <button
+            className="pagination-btn"
+            onClick={() => handlePage(page - 1)}
+            disabled={page === 1}
+          >
+            ← Poprzednia
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+            <button
+              key={p}
+              className={`pagination-btn ${p === page ? "active" : ""}`}
+              onClick={() => handlePage(p)}
+            >
+              {p}
+            </button>
+          ))}
+          <button
+            className="pagination-btn"
+            onClick={() => handlePage(page + 1)}
+            disabled={page === totalPages}
+          >
+            Następna →
+          </button>
+        </div>
+      )}
     </div>
   );
 };
