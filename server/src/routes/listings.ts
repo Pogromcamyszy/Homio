@@ -37,12 +37,26 @@ router.get("/detect-district", (req: Request, res: Response) => {
 
 router.get("/", (req: Request, res: Response) => {
   try {
-    const rows = db.prepare(`
-  SELECT l.*, (SELECT COUNT(*) FROM favorites WHERE listing_id = l.id) as likes_count
-  FROM listings l
-  JOIN users u ON l.owner_id = u.id
-  WHERE l.deleted = 0 AND l.accepted = 1 AND l.rented = 0 AND u.banned = 0
-`).all();
+    const { search, type, district, minPrice, maxPrice } = req.query;
+
+    let query = `
+      SELECT l.*, (SELECT COUNT(*) FROM favorites WHERE listing_id = l.id) as likes_count
+      FROM listings l
+      JOIN users u ON l.owner_id = u.id
+      WHERE l.deleted = 0 AND l.accepted = 1 AND l.rented = 0 AND u.banned = 0
+    `;
+    const params: any[] = [];
+
+    if (search) {
+      query += ` AND (l.title LIKE ? OR l.details LIKE ? OR l.district LIKE ?)`;
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    }
+    if (type) { query += ` AND l.type = ?`; params.push(type); }
+    if (district && district !== "All") { query += ` AND l.district = ?`; params.push(district); }
+    if (minPrice) { query += ` AND l.price >= ?`; params.push(parseInt(minPrice as string)); }
+    if (maxPrice) { query += ` AND l.price <= ?`; params.push(parseInt(maxPrice as string)); }
+
+    const rows = db.prepare(query).all(...params);
 
     const listings = rows.map((row: any) => {
       const main_photo = row.photo_1 || row.photo_2 || row.photo_3 || row.photo_4 || row.photo_5 || null;
@@ -99,24 +113,24 @@ router.get("/my", authenticateJWT, (req: AuthRequest, res: Response) => {
 router.get("/:id", (req: AuthRequest, res: Response) => {
   try {
     const row = db.prepare("SELECT * FROM listings WHERE id = ?").get(req.params.id) as any;
-if (!row) {
-  res.status(404).json({ message: "Nie znaleziono ogłoszenia." });
-  return;
-}
-if (row.deleted === 1) {
-  const authHeader2 = req.headers.authorization;
-  let isAdmin = false;
-  if (authHeader2) {
-    try {
-      const decoded2 = jwt.verify(authHeader2.split(" ")[1], SECRET_KEY) as any;
-      isAdmin = decoded2.role === "admin";
-    } catch {}
-  }
-  if (!isAdmin) {
-    res.status(404).json({ message: "Nie znaleziono ogłoszenia." });
-    return;
-  }
-}
+    if (!row) {
+      res.status(404).json({ message: "Nie znaleziono ogłoszenia." });
+      return;
+    }
+    if (row.deleted === 1) {
+      const authHeader2 = req.headers.authorization;
+      let isAdmin = false;
+      if (authHeader2) {
+        try {
+          const decoded2 = jwt.verify(authHeader2.split(" ")[1], SECRET_KEY) as any;
+          isAdmin = decoded2.role === "admin";
+        } catch {}
+      }
+      if (!isAdmin) {
+        res.status(404).json({ message: "Nie znaleziono ogłoszenia." });
+        return;
+      }
+    }
 
     const authHeader = req.headers.authorization;
     let isLoggedIn = false;
@@ -134,7 +148,6 @@ if (row.deleted === 1) {
 
     const sessionId = req.headers["x-session-id"] as string | undefined;
 
-    // sprawdź czy już oglądał
     let alreadyViewed = false;
     if (userId) {
       alreadyViewed = !!db.prepare("SELECT id FROM listing_views WHERE listing_id = ? AND user_id = ?").get(req.params.id, userId);
@@ -171,8 +184,8 @@ if (row.deleted === 1) {
       phone: isLoggedIn ? row.phone : null,
       is_owner: isLoggedIn && userId === row.owner_id,
       accepted: row.accepted,
-rented: row.rented,
-deleted: row.deleted,
+      rented: row.rented,
+      deleted: row.deleted,
       likes_count: likesCount,
       is_liked: isLiked,
       views: updatedRow.views,
