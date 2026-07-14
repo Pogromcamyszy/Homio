@@ -115,7 +115,7 @@ function AppContent() {
           {token && (
             <>
               <Link to="/add-listing">Add Listing</Link>
-              <Link to="/chat">Wiadomości</Link>
+              <Link to="/chat">Chat</Link>
               <Link to="/login" onClick={logout}>Logout</Link>
               {role === "admin" && <Link to="/admin">Admin</Link>}
             </>
