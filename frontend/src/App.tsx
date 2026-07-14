@@ -11,51 +11,48 @@ import EditListing from "./pages/EditListing";
 import Dashboard from "./pages/Dashboard";
 import AdminPanel from "./pages/AdminPanel";
 import Profile from "./pages/Profile";
+import Chat from "./pages/Chat";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider, AuthContext } from "./AuthContext";
 import ListingDetail from "./pages/ListingDetail";
 import UserProfile from "./pages/UserProfile";
-import { initApiFetch } from "./api/apiFetch";
 import NotFound from "./pages/NotFound";
-
-
+import { initApiFetch } from "./api/apiFetch";
 
 function AppContent() {
   const { token, role, username, logout, banned, setBanned } = useContext(AuthContext);
   const navigate = useNavigate();
   const [avatar, setAvatar] = useState<string | null>(null);
 
-  const apiFetch = async (url: string, options: RequestInit = {}) => {
-    const res = await fetch(url, options);
-    if (res.status === 403) {
-      const data = await res.json();
-      if (data.message === "BANNED") {
-        setBanned(true);
-        return null;
-      }
-      if (data.message === "Invalid or expired token") {
-        logout();
-        toast.error("Sesja wygasła. Zaloguj się ponownie.");
-        navigate("/login");
-        return null;
-      }
-    }
-    return res;
-  };
+  useEffect(() => {
+    initApiFetch(logout, setBanned, navigate);
+  }, []);
 
   useEffect(() => {
     if (!token) { setAvatar(null); return; }
-    apiFetch("http://localhost:5000/api/profile/me", {
+    fetch("http://localhost:5000/api/profile/me", {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => res ? res.json() : null)
-      .then((data) => { if (data) setAvatar(data.avatar || null); })
+      .then((res) => {
+        if (res.status === 403) {
+          return res.json().then((data) => {
+            if (data.message === "BANNED") {
+              setBanned(true);
+            } else if (data.message === "Invalid or expired token") {
+              logout();
+              toast.error("Sesja wygasła. Zaloguj się ponownie.");
+              navigate("/login");
+            }
+            return null;
+          });
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (data) setAvatar(data.avatar || null);
+      })
       .catch(() => {});
   }, [token]);
-
-  useEffect(() => {
-  initApiFetch(logout, setBanned, navigate);
-}, []);
 
   if (banned) {
     return (
@@ -118,6 +115,7 @@ function AppContent() {
           {token && (
             <>
               <Link to="/add-listing">Add Listing</Link>
+              <Link to="/chat">Wiadomości</Link>
               <Link to="/login" onClick={logout}>Logout</Link>
               {role === "admin" && <Link to="/admin">Admin</Link>}
             </>
@@ -146,6 +144,8 @@ function AppContent() {
         <Route path="/add-listing" element={<ProtectedRoute><AddListing /></ProtectedRoute>} />
         <Route path="/listings/:id/edit" element={<ProtectedRoute><EditListing /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
+        <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+        <Route path="/chat/:userId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
         <Route path="/user/:id" element={<UserProfile />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

@@ -56,19 +56,17 @@ export default function Home() {
     setLoading(true);
     setSelectedListing(null);
     try {
-      const res = await fetch("http://localhost:5000/listings");
-      const data: Listing[] = await res.json();
+      const query = new URLSearchParams();
+      if (district !== "Wszystkie") query.append("district", district);
+      if (type) query.append("type", type);
+      if (minPrice) query.append("minPrice", minPrice);
+      if (maxPrice) query.append("maxPrice", maxPrice);
+      query.append("limit", "100");
 
-      const filtered = data.filter((l) => {
-        return (
-          (district === "Wszystkie" || l.district === district) &&
-          (minPrice === "" || l.price >= parseInt(minPrice)) &&
-          (maxPrice === "" || l.price <= parseInt(maxPrice)) &&
-          (type === "" || l.type === type)
-        );
-      });
-
-      setListings(filtered);
+      const res = await fetch(`http://localhost:5000/listings?${query.toString()}`);
+      const data = await res.json();
+      const fetchedListings = Array.isArray(data) ? data : data.listings || [];
+      setListings(fetchedListings);
       setSearched(true);
     } catch (err) {
       console.error("Error fetching listings:", err);

@@ -138,15 +138,20 @@ export default function UserProfile() {
                 <p>Dane polubienia: <strong>🤍 {profile.stats.likes_given}</strong></p>
               </div>
             </div>
-            {role === "admin" && (
-              <div>
-                {profile.banned === 0 ? (
+            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+              {token && (
+                <button className="btn-message" onClick={() => navigate(`/chat/${id}`)}>
+                  Wyślij wiadomość
+                </button>
+              )}
+              {role === "admin" && (
+                profile.banned === 0 ? (
                   <button className="btn-ban" onClick={handleBan}>Zbanuj</button>
                 ) : (
                   <button className="btn-unban" onClick={handleUnban}>Odbanuj</button>
-                )}
-              </div>
-            )}
+                )
+              )}
+            </div>
           </div>
         </div>
       </div>
